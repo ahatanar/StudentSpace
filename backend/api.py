@@ -30,5 +30,14 @@ def health_check():
     return {"status": "ok"}
 
 @app.get("/heatmap")
-def get_heatmap():
-    return build_simple_heatmap()
+def get_heatmap(interval: int = 30):
+    """
+    Get heatmap data with configurable time interval.
+    
+    Args:
+        interval: Minutes per time slot (default 30, supports 10, 15, 30, etc.)
+    
+    Returns:
+        Heatmap data with the specified granularity
+    """
+    return build_simple_heatmap(interval)

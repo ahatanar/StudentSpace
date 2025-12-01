@@ -22,10 +22,13 @@ def load_sections(file_path=DATA_FILE_PATH):
         print(f"Error loading JSON data: {e}")
         return []
 
-def build_simple_heatmap():
+def build_simple_heatmap(interval_minutes: int = 30):
     """
     Loads sections, filters for Oshawa campus and In-Person delivery,
-    and returns a structured dict.
+    and returns a structured dict with time-based heatmap data.
+    
+    Args:
+        interval_minutes: Minutes per time slot (default 30, can be 10, 15, etc.)
     """
     raw_sections = load_sections()
     filtered_sections = []
@@ -39,7 +42,7 @@ def build_simple_heatmap():
             is_oshawa = True
         
         # Also check meeting times if top-level campus is ambiguous (though usually top-level is enough)
-        # The prompt says: Use campusDescription or meetingTime.campusDescription that contains “Oshawa”.
+        # The prompt says: Use campusDescription or meetingTime.campusDescription that contains "Oshawa".
         if not is_oshawa:
             meetings = section.get("meetingsFaculty") or []
             for meeting in meetings:
@@ -49,19 +52,37 @@ def build_simple_heatmap():
                     is_oshawa = True
                     break
         
-        # Filter 2: In-person sections
-        # Use instructionalMethodDescription (e.g. “In-Person”)
+        # Filter 2: In-person sections only (exclude online/remote)
+        # Use instructionalMethodDescription (e.g. "In-Person")
         is_in_person = False
-        method_desc = section.get("instructionalMethodDescription")
-        if method_desc and "In-Person" in method_desc:
+        is_online = False
+        
+        method_desc = section.get("instructionalMethodDescription", "").lower()
+        
+        # Check if it's explicitly in-person
+        if "in-person" in method_desc or "in person" in method_desc:
             is_in_person = True
+        
+        # Explicitly exclude online/remote classes
+        if any(keyword in method_desc for keyword in ["online", "remote", "virtual", "web", "distance"]):
+            is_online = True
 
-        if is_oshawa and is_in_person:
+        # Only include if it's Oshawa campus, in-person, and NOT online
+        if is_oshawa and is_in_person and not is_online:
             filtered_sections.append(section)
+
+    # Import and use time slot processor with specified interval
+    from time_slot_processor import build_heatmap_grid, generate_time_slots
+    
+    heatmap_data = build_heatmap_grid(filtered_sections, interval_minutes)
+    time_slots = generate_time_slots(interval_minutes=interval_minutes)
 
     return {
         "term": "202601",
         "campus": "Oshawa",
         "totalSections": len(filtered_sections),
+        "heatmapData": heatmap_data,
+        "timeSlots": time_slots,
+        "interval": interval_minutes,
         "rawSections": filtered_sections
     }

@@ -55,6 +55,23 @@ async def get_sections(
 ) -> list:
     """Get a list of sections for a given course code."""
 
+    cookies = {
+        "JSESSIONID": jsessionid,
+    }
+    
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Content-Type": "application/x-www-form-urlencoded",
+    }
+    
+    # STEP 1: Select the term (REQUIRED!)
+    term_url = f"{BASE_URL}/term/search?mode=search"
+    term_data = {"term": term, "mepCode": MEP_CODE}
+    
+    async with session.post(term_url, data=term_data, cookies=cookies, headers=headers) as response:
+        response.raise_for_status()
+    
+    # STEP 2: Reset the data form
     await reset_data_form(session, jsessionid)
 
     cookies = {
@@ -84,6 +101,7 @@ async def get_sections(
         response.raise_for_status()
 
         data = await response.json()
+        
         if data["data"] is None:
             raise ValueError(
                 f"No sections found for the term '{term}'. Check the JSESSIONID."
