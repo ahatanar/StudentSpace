@@ -114,8 +114,8 @@ export default function HeatmapDisplay() {
                         <button
                             onClick={() => setSelectedTerm('202509')}
                             className={`px-6 py-3 rounded-lg font-semibold transition-all ${selectedTerm === '202509'
-                                    ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md'
-                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md'
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                 }`}
                         >
                             🍂 Fall 2025
@@ -123,8 +123,8 @@ export default function HeatmapDisplay() {
                         <button
                             onClick={() => setSelectedTerm('202601')}
                             className={`px-6 py-3 rounded-lg font-semibold transition-all ${selectedTerm === '202601'
-                                    ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md'
-                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md'
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                 }`}
                         >
                             ❄️ Winter 2026
@@ -169,8 +169,8 @@ export default function HeatmapDisplay() {
                     <button
                         onClick={() => setInterval(30)}
                         className={`px-4 py-2 rounded-lg font-medium transition-colors ${interval === 30
-                                ? 'bg-indigo-600 text-white'
-                                : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+                            ? 'bg-indigo-600 text-white'
+                            : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
                             }`}
                     >
                         30 Minutes
@@ -178,8 +178,8 @@ export default function HeatmapDisplay() {
                     <button
                         onClick={() => setInterval(10)}
                         className={`px-4 py-2 rounded-lg font-medium transition-colors ${interval === 10
-                                ? 'bg-indigo-600 text-white'
-                                : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+                            ? 'bg-indigo-600 text-white'
+                            : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
                             }`}
                     >
                         10 Minutes
@@ -191,8 +191,8 @@ export default function HeatmapDisplay() {
                     <button
                         onClick={() => setViewMode('grid')}
                         className={`px-4 py-2 rounded-lg font-medium transition-colors ${viewMode === 'grid'
-                                ? 'bg-indigo-600 text-white'
-                                : 'bg-white text-gray-700 hover:bg-gray-100'
+                            ? 'bg-indigo-600 text-white'
+                            : 'bg-white text-gray-700 hover:bg-gray-100'
                             }`}
                     >
                         Grid View
@@ -200,8 +200,8 @@ export default function HeatmapDisplay() {
                     <button
                         onClick={() => setViewMode('table')}
                         className={`px-4 py-2 rounded-lg font-medium transition-colors ${viewMode === 'table'
-                                ? 'bg-indigo-600 text-white'
-                                : 'bg-white text-gray-700 hover:bg-gray-100'
+                            ? 'bg-indigo-600 text-white'
+                            : 'bg-white text-gray-700 hover:bg-gray-100'
                             }`}
                     >
                         Table View

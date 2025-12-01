@@ -1,5 +1,7 @@
-import HeatmapDisplay from "@/components/HeatmapDisplay";
+"use client";
+
+import { redirect } from "next/navigation";
 
 export default function Home() {
-  return <HeatmapDisplay />;
+  return redirect("/dashboard");
 }
