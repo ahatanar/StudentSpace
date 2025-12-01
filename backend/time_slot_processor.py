@@ -68,11 +68,31 @@ def parse_meeting_time(meeting_time_str: Optional[str]) -> Optional[time]:
         return None
 
 
+def to_minutes(time_str: Optional[str]) -> Optional[int]:
+    """Convert 'HHMM' string to minutes from midnight."""
+    if not time_str:
+        return None
+    try:
+        s = str(time_str).zfill(4)
+        if len(s) != 4:
+            return None
+        h = int(s[:2])
+        m = int(s[2:])
+        return h * 60 + m
+    except (ValueError, TypeError):
+        return None
+
+def minutes_to_time_str(minutes: int) -> str:
+    """Convert minutes from midnight to 'HH:MM' string."""
+    h = (minutes // 60) % 24
+    m = minutes % 60
+    return f"{h:02d}:{m:02d}"
+
 def get_time_slots_for_meeting(begin_time_str: Optional[str], 
                                end_time_str: Optional[str],
                                interval_minutes: int = 30) -> Set[str]:
     """
-    Determine which time slots a meeting occupies.
+    Determine which time slots a meeting occupies using integer arithmetic.
     
     Args:
         begin_time_str: Meeting start time in "HHMM" format
@@ -81,37 +101,28 @@ def get_time_slots_for_meeting(begin_time_str: Optional[str],
     
     Returns:
         Set of time slot strings that this meeting overlaps
-    
-    Example:
-        >>> get_time_slots_for_meeting("0940", "1100", 30)
-        {"09:30", "10:00", "10:30"}
     """
-    begin_time = parse_meeting_time(begin_time_str)
-    end_time = parse_meeting_time(end_time_str)
+    begin_min = to_minutes(begin_time_str)
+    end_min = to_minutes(end_time_str)
     
-    if not begin_time or not end_time:
+    if begin_min is None or end_min is None:
         return set()
     
     slots = set()
     
-    # Generate all possible slots with the specified interval
-    all_slots = generate_time_slots(0, 23, interval_minutes)
-    
-    for slot_str in all_slots:
-        slot_time = datetime.strptime(slot_str, "%H:%M").time()
+    # Iterate through all possible slots in a day (00:00 to 23:59)
+    # 24 * 60 = 1440 minutes
+    for slot_start in range(0, 1440, interval_minutes):
+        slot_end = slot_start + interval_minutes
         
-        # A slot overlaps the meeting if:
-        # - The slot starts during the meeting, OR
-        # - The meeting starts during the slot
-        slot_end = (datetime.combine(datetime.today(), slot_time) + 
-                   timedelta(minutes=interval_minutes)).time()
+        # Check for overlap:
+        # The meeting overlaps the slot if the meeting interval [begin, end)
+        # intersects with the slot interval [slot_start, slot_end).
+        # Intersection exists if max(start1, start2) < min(end1, end2)
         
-        # Check if there's any overlap
-        if (begin_time <= slot_time < end_time or
-            begin_time < slot_end <= end_time or
-            (slot_time <= begin_time and end_time <= slot_end)):
-            slots.add(slot_str)
-    
+        if max(begin_min, slot_start) < min(end_min, slot_end):
+            slots.add(minutes_to_time_str(slot_start))
+            
     return slots
 
 

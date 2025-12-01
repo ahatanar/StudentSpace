@@ -37,66 +37,171 @@ interface HeatmapData {
     totalSections: number;
     heatmapData: {
         [key: string]: { [timeSlot: string]: number };
+    };
+    timeSlots: string[];
+    rawSections: Section[];
+}
+
+export default function HeatmapDisplay() {
+    const [data, setData] = useState<HeatmapData | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
+    const [interval, setInterval] = useState<10 | 30>(30);
+    const [selectedTerm, setSelectedTerm] = useState<'202509' | '202601'>('202601');
+
+    useEffect(() => {
+        setLoading(true);
+        fetch(`http://localhost:8000/heatmap?interval=${interval}&term=${selectedTerm}`)
+            .then(res => {
+                if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+                return res.json();
+            })
+            .then(jsonData => {
+                setData(jsonData);
+                setLoading(false);
+            })
+            .catch(err => {
+                setError(err.message);
+                setLoading(false);
+            });
+    }, [interval, selectedTerm]);
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <div className="text-xl font-medium">Loading heatmap data...</div>
+            </div>
         );
     }
 
-    if(error) {
-    return (
-        <div className="flex items-center justify-center min-h-screen">
-            <div className="text-red-600 text-xl">Error: {error}</div>
-        </div>
-    );
-}
-
-if (!data) {
-    return (
-        <div className="flex items-center justify-center min-h-screen">
-            <div className="text-xl">No data available</div>
-        </div>
-    );
-}
-
-return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-8">
-        <div className="max-w-7xl mx-auto">
-            <div className="bg-white rounded-2xl shadow-xl p-8 mb-8">
-                <h1 className="text-4xl font-bold text-gray-900 mb-2">
-                    Campus Heatmap
-                </h1>
-                <p className="text-gray-600 text-lg">
-                    Visualizing course sections for {data.campus} campus
-                </p>
+    if (error) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <div className="text-red-600 text-xl">Error: {error}</div>
             </div>
+        );
+    }
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <div className="bg-white rounded-xl shadow-lg p-6">
-                    <div className="text-sm font-medium text-gray-500 uppercase tracking-wide">
-                        Term
-                    </div>
-                    <div className="mt-2 text-3xl font-bold text-indigo-600">
-                        {data.term}
+    if (!data) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <div className="text-xl">No data available</div>
+            </div>
+        );
+    }
+
+    const termLabels = {
+        '202509': 'Fall 2025',
+        '202601': 'Winter 2026'
+    };
+
+    return (
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-8">
+            <div className="max-w-7xl mx-auto">
+                <div className="bg-white rounded-2xl shadow-xl p-8 mb-8">
+                    <h1 className="text-4xl font-bold text-gray-900 mb-2">
+                        Campus Heatmap
+                    </h1>
+                    <p className="text-gray-600 text-lg">
+                        Visualizing course sections for {data.campus} campus
+                    </p>
+                </div>
+
+                {/* Term Selector */}
+                <div className="mb-6">
+                    <div className="bg-white rounded-xl shadow-lg p-2 inline-flex gap-2">
+                        <button
+                            onClick={() => setSelectedTerm('202509')}
+                            className={`px-6 py-3 rounded-lg font-semibold transition-all ${selectedTerm === '202509'
+                                    ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md'
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                }`}
+                        >
+                            🍂 Fall 2025
+                        </button>
+                        <button
+                            onClick={() => setSelectedTerm('202601')}
+                            className={`px-6 py-3 rounded-lg font-semibold transition-all ${selectedTerm === '202601'
+                                    ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md'
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                }`}
+                        >
+                            ❄️ Winter 2026
+                        </button>
                     </div>
                 </div>
 
-                <div className="bg-white rounded-xl shadow-lg p-6">
-                    <div className="text-sm font-medium text-gray-500 uppercase tracking-wide">
-                        Campus
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div className="bg-white rounded-xl shadow-lg p-6">
+                        <div className="text-sm font-medium text-gray-500 uppercase tracking-wide">
+                            Term
+                        </div>
+                        <div className="mt-2 text-3xl font-bold text-indigo-600">
+                            {termLabels[selectedTerm]}
+                        </div>
                     </div>
-                    <div className="mt-2 text-3xl font-bold text-indigo-600">
-                        {data.campus}
+
+                    <div className="bg-white rounded-xl shadow-lg p-6">
+                        <div className="text-sm font-medium text-gray-500 uppercase tracking-wide">
+                            Campus
+                        </div>
+                        <div className="mt-2 text-3xl font-bold text-indigo-600">
+                            {data.campus}
+                        </div>
+                    </div>
+
+                    <div className="bg-white rounded-xl shadow-lg p-6">
+                        <div className="text-sm font-medium text-gray-500 uppercase tracking-wide">
+                            Total Sections
+                        </div>
+                        <div className="mt-2 text-3xl font-bold text-indigo-600">
+                            {data.totalSections}
+                        </div>
                     </div>
                 </div>
 
-                <div className="bg-white rounded-xl shadow-lg p-6">
-                    <div className="text-sm font-medium text-gray-500 uppercase tracking-wide">
-                >
+                {/* Interval Toggle */}
+                <div className="mb-4 flex justify-center gap-2">
+                    <span className="text-sm font-medium text-gray-700 flex items-center mr-2">
+                        Time Granularity:
+                    </span>
+                    <button
+                        onClick={() => setInterval(30)}
+                        className={`px-4 py-2 rounded-lg font-medium transition-colors ${interval === 30
+                                ? 'bg-indigo-600 text-white'
+                                : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+                            }`}
+                    >
+                        30 Minutes
+                    </button>
+                    <button
+                        onClick={() => setInterval(10)}
+                        className={`px-4 py-2 rounded-lg font-medium transition-colors ${interval === 10
+                                ? 'bg-indigo-600 text-white'
+                                : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+                            }`}
+                    >
+                        10 Minutes
+                    </button>
+                </div>
+
+                {/* View Toggle */}
+                <div className="mb-6 flex justify-end gap-2">
+                    <button
+                        onClick={() => setViewMode('grid')}
+                        className={`px-4 py-2 rounded-lg font-medium transition-colors ${viewMode === 'grid'
+                                ? 'bg-indigo-600 text-white'
+                                : 'bg-white text-gray-700 hover:bg-gray-100'
+                            }`}
+                    >
                         Grid View
                     </button>
                     <button
                         onClick={() => setViewMode('table')}
                         className={`px-4 py-2 rounded-lg font-medium transition-colors ${viewMode === 'table'
-                            ? 'bg-indigo-600 text-white'
-                            : 'bg-white text-gray-700 hover:bg-gray-100'
+                                ? 'bg-indigo-600 text-white'
+                                : 'bg-white text-gray-700 hover:bg-gray-100'
                             }`}
                     >
                         Table View
@@ -174,5 +279,5 @@ return (
                 )}
             </div>
         </div>
-        );
+    );
 }
