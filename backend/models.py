@@ -78,6 +78,7 @@ class Club(BaseModel):
     """
     id: Optional[str] = None  # Firestore auto-generates
     name: str
+    abbreviation: Optional[str] = None # e.g. "CS Club" -> "CS"
     description: str
     type: ClubType  # Academic, Sports, Arts, Social, etc. (for UI)
     created_by: Optional[str] = None  # User UID

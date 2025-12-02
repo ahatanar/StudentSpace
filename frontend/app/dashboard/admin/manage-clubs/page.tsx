@@ -78,8 +78,8 @@ export default function ManageClubsPage() {
               key={s}
               onClick={() => setFilter(s)}
               className={`px-6 py-2 rounded-lg font-medium transition-all ${filter === s
-                  ? "bg-indigo-600 text-white shadow-md"
-                  : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+                ? "bg-indigo-600 text-white shadow-md"
+                : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
                 }`}
             >
               {s.charAt(0).toUpperCase() + s.slice(1)}
@@ -107,6 +107,7 @@ export default function ManageClubsPage() {
                   <div className="flex items-center gap-3 mb-2">
                     <h3 className="text-xl font-bold text-gray-900 dark:text-white">
                       {club.name}
+                      {club.abbreviation && <span className="ml-2 text-gray-500 text-lg">({club.abbreviation})</span>}
                     </h3>
                     <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs rounded-md">
                       {club.type}

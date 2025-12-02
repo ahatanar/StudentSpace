@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException, Depends, Header
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Optional
 from firebase_admin import auth
-from models import User, Club, ClubRole, ClubStatus, ClubType
+from models import User, Club, ClubMembership, ClubRole, ClubStatus, ClubType
 from services import UserService, ClubService
 from heatmap_builder import build_simple_heatmap
 
@@ -71,9 +71,13 @@ def create_club(club: Club, user: User = Depends(get_current_user)):
     return ClubService.create_club(club, user)
 
 @app.get("/clubs", response_model=List[Club])
-def list_clubs(status: str = "active"):
-    """List all clubs (default: active only)"""
+def list_clubs(status: str = "active", search: Optional[str] = None):
+    """List all clubs (default: active only). Optional search query."""
     club_status = ClubStatus(status) if status else None
+    
+    if search:
+        return ClubService.search_clubs(search, club_status)
+    
     return ClubService.list_clubs(club_status)
 
 @app.get("/clubs/{club_id}", response_model=Club)
@@ -114,6 +118,31 @@ def get_my_profile(user: User = Depends(get_current_user)):
 @app.get("/users/me/memberships")
 def get_my_memberships(user: User = Depends(get_current_user)):
     return ClubService.get_user_memberships(user.uid)
+
+@app.get("/users/search", response_model=User)
+def search_user(email: str, user: User = Depends(get_current_user)):
+    """Search for a user by email (Authenticated users only)"""
+    found_user = UserService.get_user_by_email(email)
+    if not found_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return found_user
+
+@app.post("/clubs/{club_id}/executives", response_model=ClubMembership)
+def add_club_executive(club_id: str, user_id: str, current_user: User = Depends(get_current_user)):
+    """Add a user as an executive to a club (President/Admin only)"""
+    # Check permissions
+    if not current_user.is_admin:
+        club = ClubService.get_club(club_id)
+        if not club:
+            raise HTTPException(status_code=404, detail="Club not found")
+            
+        memberships = ClubService.get_user_memberships(current_user.uid)
+        is_president = any(m.club_id == club_id and m.role == ClubRole.PRESIDENT for m in memberships)
+        
+        if not is_president:
+             raise HTTPException(status_code=403, detail="Only the Club President can add executives")
+
+    return ClubService.add_executive(club_id, user_id)
 
 
 # ============================================================================
