@@ -39,7 +39,8 @@ interface HeatmapData {
         [key: string]: { [timeSlot: string]: number };
     };
     timeSlots: string[];
-    rawSections: Section[];
+    rawSections?: Section[];  // Optional now - only included if include_raw=true
+    rawSectionsCount?: number; // Count when rawSections is excluded
 }
 
 export default function HeatmapDisplay() {
@@ -52,16 +53,22 @@ export default function HeatmapDisplay() {
 
     useEffect(() => {
         setLoading(true);
-        fetch(`http://localhost:8000/heatmap?interval=${interval}&term=${selectedTerm}`)
+        const url = `http://localhost:8000/heatmap?interval=${interval}&term=${selectedTerm}`;
+        console.log('🔍 Fetching heatmap data from:', url);
+
+        fetch(url)
             .then(res => {
+                console.log('📡 Response received:', res.status, res.statusText);
                 if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
                 return res.json();
             })
             .then(jsonData => {
+                console.log('✅ Data loaded successfully:', jsonData);
                 setData(jsonData);
                 setLoading(false);
             })
             .catch(err => {
+                console.error('❌ Error loading heatmap:', err);
                 setError(err.message);
                 setLoading(false);
             });
@@ -222,59 +229,71 @@ export default function HeatmapDisplay() {
                         <h2 className="text-2xl font-bold text-gray-900 mb-6">
                             Section Details
                         </h2>
-                        <div className="text-gray-600 mb-4">
-                            Showing {data.rawSections.length} sections filtered for in-person classes at {data.campus}
-                        </div>
 
-                        <div className="overflow-x-auto">
-                            <table className="min-w-full divide-y divide-gray-200">
-                                <thead className="bg-gray-50">
-                                    <tr>
-                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            CRN
-                                        </th>
-                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Course
-                                        </th>
-                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Title
-                                        </th>
-                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Type
-                                        </th>
-                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Enrollment
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody className="bg-white divide-y divide-gray-200">
-                                    {data.rawSections.slice(0, 50).map((section) => (
-                                        <tr key={section.id} className="hover:bg-gray-50">
-                                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
-                                                {section.courseReferenceNumber}
-                                            </td>
-                                            <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-indigo-600">
-                                                {section.subject} {section.courseNumber}
-                                            </td>
-                                            <td className="px-4 py-3 text-sm text-gray-900">
-                                                {section.courseTitle}
-                                            </td>
-                                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
-                                                {section.scheduleTypeDescription}
-                                            </td>
-                                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
-                                                {section.enrollment} / {section.maximumEnrollment}
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                            {data.rawSections.length > 50 && (
-                                <div className="mt-4 text-center text-sm text-gray-500">
-                                    Showing first 50 of {data.rawSections.length} sections
+                        {!data.rawSections ? (
+                            <div className="text-gray-600 mb-4 p-8 bg-blue-50 rounded-lg border border-blue-200">
+                                <p className="text-lg mb-2">📊 Raw section data is not loaded by default to improve performance.</p>
+                                <p className="text-sm">
+                                    Total sections available: <span className="font-bold">{data.rawSectionsCount || data.totalSections}</span>
+                                </p>
+                            </div>
+                        ) : (
+                            <>
+                                <div className="text-gray-600 mb-4">
+                                    Showing {data.rawSections.length} sections filtered for in-person classes at {data.campus}
                                 </div>
-                            )}
-                        </div>
+
+                                <div className="overflow-x-auto">
+                                    <table className="min-w-full divide-y divide-gray-200">
+                                        <thead className="bg-gray-50">
+                                            <tr>
+                                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    CRN
+                                                </th>
+                                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    Course
+                                                </th>
+                                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    Title
+                                                </th>
+                                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    Type
+                                                </th>
+                                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    Enrollment
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="bg-white divide-y divide-gray-200">
+                                            {data.rawSections.slice(0, 50).map((section) => (
+                                                <tr key={section.id} className="hover:bg-gray-50">
+                                                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                                                        {section.courseReferenceNumber}
+                                                    </td>
+                                                    <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-indigo-600">
+                                                        {section.subject} {section.courseNumber}
+                                                    </td>
+                                                    <td className="px-4 py-3 text-sm text-gray-900">
+                                                        {section.courseTitle}
+                                                    </td>
+                                                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                                                        {section.scheduleTypeDescription}
+                                                    </td>
+                                                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                                                        {section.enrollment} / {section.maximumEnrollment}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                    {data.rawSections.length > 50 && (
+                                        <div className="mt-4 text-center text-sm text-gray-500">
+                                            Showing first 50 of {data.rawSections.length} sections
+                                        </div>
+                                    )}
+                                </div>
+                            </>
+                        )}
                     </div>
                 )}
             </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { signInWithPopup } from "firebase/auth";
-import { auth, googleProvider } from "../../backend/lib/firebase";
+import { auth, googleProvider } from "../lib/firebase";
 
 export default function GoogleLoginButton() {
     async function login() {

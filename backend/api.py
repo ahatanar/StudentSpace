@@ -30,15 +30,25 @@ def health_check():
     return {"status": "ok"}
 
 @app.get("/heatmap")
-def get_heatmap(interval: int = 30, term: str = "202601"):
+def get_heatmap(interval: int = 30, term: str = "202601", include_raw: bool = False):
     """
     Get heatmap data with configurable time interval and term.
     
     Args:
         interval: Minutes per time slot (default 30, supports 10, 15, 30, etc.)
         term: Term code (default "202601", options: "202509", "202601")
+        include_raw: Include raw section data (default False to reduce payload size)
     
     Returns:
         Heatmap data with the specified granularity for the selected term
     """
-    return build_simple_heatmap(interval, term)
+    result = build_simple_heatmap(interval, term)
+    
+    # Exclude rawSections by default to prevent large payloads from hanging
+    if not include_raw and 'rawSections' in result:
+        # Keep count but remove the actual data
+        raw_count = len(result['rawSections'])
+        del result['rawSections']
+        result['rawSectionsCount'] = raw_count
+    
+    return result

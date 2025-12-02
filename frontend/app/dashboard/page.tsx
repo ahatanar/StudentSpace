@@ -2,7 +2,7 @@
 
 import { useAuth } from "../AuthProvider";
 import { signOut } from "firebase/auth";
-import { auth } from "../../../backend/lib/firebase";
+import { auth } from "../../lib/firebase";
 import Link from "next/link";
 import { useState } from "react";
 
