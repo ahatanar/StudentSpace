@@ -40,6 +40,19 @@ class ClubStatus(str, Enum):
     SUSPENDED = "suspended"  # Temporarily disabled
 
 
+class ClubType(str, Enum):
+    """Types of clubs available"""
+    ACADEMIC = "Academic"
+    SPORTS = "Sports"
+    ARTS = "Arts"
+    SOCIAL = "Social"
+    CULTURAL = "Cultural"
+    TECHNOLOGY = "Technology"
+    CHARITY = "Charity"
+    RELIGIOUS = "Religious"
+    OTHER = "Other"
+
+
 # ============================================================================
 # MODELS
 # ============================================================================
@@ -66,9 +79,9 @@ class Club(BaseModel):
     id: Optional[str] = None  # Firestore auto-generates
     name: str
     description: str
-    type: str  # Academic, Sports, Arts, Social, etc. (for UI)
-    created_by: str  # User UID
-    president_id: str  # User UID (current president)
+    type: ClubType  # Academic, Sports, Arts, Social, etc. (for UI)
+    created_by: Optional[str] = None  # User UID
+    president_id: Optional[str] = None  # User UID (current president)
     status: ClubStatus = ClubStatus.PENDING
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None

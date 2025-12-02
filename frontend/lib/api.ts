@@ -61,4 +61,11 @@ export const api = {
         if (!res.ok) throw new Error("Failed to fetch memberships");
         return res.json();
     },
+
+    async getClubTypes() {
+        const headers = await getAuthHeaders();
+        const res = await fetch(`${API_BASE_URL}/club-types`, { headers });
+        if (!res.ok) throw new Error("Failed to fetch club types");
+        return res.json();
+    },
 };

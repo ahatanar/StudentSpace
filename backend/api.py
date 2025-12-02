@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException, Depends, Header
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Optional
 from firebase_admin import auth
-from models import User, Club, ClubRole, ClubStatus
+from models import User, Club, ClubRole, ClubStatus, ClubType
 from services import UserService, ClubService
 from heatmap_builder import build_simple_heatmap
 
@@ -57,6 +57,11 @@ async def get_current_user(authorization: Optional[str] = Header(None)) -> User:
 # ============================================================================
 # CLUB ENDPOINTS
 # ============================================================================
+
+@app.get("/club-types", response_model=List[str])
+def get_club_types():
+    """Return list of available club types"""
+    return [t.value for t in ClubType]
 
 @app.post("/clubs", response_model=Club)
 def create_club(club: Club, user: User = Depends(get_current_user)):
