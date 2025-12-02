@@ -132,3 +132,6 @@ def get_heatmap(interval: int = 30, term: str = "202601", include_raw: bool = Fa
         del result['rawSections']
         result['rawSectionsCount'] = raw_count
     return result
+
+
+

@@ -100,6 +100,9 @@ class ClubMembership(BaseModel):
     joined_at: Optional[datetime] = None
 
 
+
+
+
 # ============================================================================
 # PERMISSION HELPER METHODS
 # ============================================================================

@@ -116,26 +116,7 @@ export default function PublicDashboard({ hideHeader }: PublicDashboardProps) {
         </header>
       )}
 
-      <section className="mb-10">
-        <h2 className="text-2xl font-bold mb-4">Upcoming Events</h2>
 
-        <div className="space-y-3">
-          {events.length === 0 && (
-            <p className="text-slate-500">No events yet.</p>
-          )}
-
-          {events.map((event) => (
-            <div
-              key={event.id}
-              className="p-4 bg-white dark:bg-slate-900 border rounded-lg"
-            >
-              <h3 className="font-semibold">{event.title}</h3>
-              <p className="text-sm">{event.description}</p>
-              <p className="text-xs text-slate-500 mt-2">{event.date}</p>
-            </div>
-          ))}
-        </div>
-      </section>
 
       <section>
         <h2 className="text-2xl font-bold mb-4">Clubs</h2>

@@ -37,9 +37,7 @@ export default function AdminDashboard() {
           <Link href="/dashboard/admin/manage-clubs" className="underline">
             Clubs
           </Link>
-          <Link href="/dashboard/admin/manage-events" className="underline">
-            Manage Events
-          </Link>
+
           <Link href="/dashboard/admin/heatmap" className="underline">
             Heatmap
           </Link>
