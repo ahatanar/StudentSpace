@@ -133,7 +133,10 @@ export default function PublicDashboard({ hideHeader }: PublicDashboardProps) {
                 className="p-4 bg-white dark:bg-slate-900 border rounded-lg flex justify-between"
               >
                 <div>
-                  <h3 className="font-semibold">{club.name}</h3>
+                  <h3 className="font-semibold">
+                    {club.name}
+                    {club.abbreviation && <span className="ml-2 text-slate-500 text-sm">({club.abbreviation})</span>}
+                  </h3>
                   <p className="text-sm text-slate-600">{club.description}</p>
                   <p className="text-xs text-slate-500">{club.category}</p>
                 </div>

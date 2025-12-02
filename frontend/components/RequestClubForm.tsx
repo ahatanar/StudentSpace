@@ -12,6 +12,7 @@ export default function RequestClubForm({ onClose, onSuccess }: RequestClubFormP
     const [types, setTypes] = useState<string[]>([]);
     const [formData, setFormData] = useState({
         name: "",
+        abbreviation: "",
         description: "",
         type: "",
     });
@@ -64,6 +65,19 @@ export default function RequestClubForm({ onClose, onSuccess }: RequestClubFormP
                                 value={formData.name}
                                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                 placeholder="e.g., Robotics Club"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                Abbreviation (Optional)
+                            </label>
+                            <input
+                                type="text"
+                                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                                value={formData.abbreviation}
+                                onChange={(e) => setFormData({ ...formData, abbreviation: e.target.value })}
+                                placeholder="e.g., CS"
                             />
                         </div>
 

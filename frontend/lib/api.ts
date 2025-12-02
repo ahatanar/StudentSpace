@@ -13,9 +13,13 @@ async function getAuthHeaders(): Promise<HeadersInit> {
 }
 
 export const api = {
-    async getClubs(status = "active") {
+    async getClubs(status = "active", search?: string) {
         const headers = await getAuthHeaders();
-        const res = await fetch(`${API_BASE_URL}/clubs?status=${status}`, { headers });
+        let url = `${API_BASE_URL}/clubs?status=${status}`;
+        if (search) {
+            url += `&search=${encodeURIComponent(search)}`;
+        }
+        const res = await fetch(url, { headers });
         if (!res.ok) throw new Error("Failed to fetch clubs");
         return res.json();
     },

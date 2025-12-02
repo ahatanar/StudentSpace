@@ -56,6 +56,16 @@ class UserService:
             return User(**doc.to_dict())
         return None
 
+    @staticmethod
+    def get_user_by_email(email: str) -> Optional[User]:
+        if not db: raise Exception("Database not connected")
+        
+        # Query users by email
+        docs = db.collection('users').where('email', '==', email).limit(1).stream()
+        for doc in docs:
+            return User(**doc.to_dict())
+        return None
+
 
 class ClubService:
     @staticmethod
@@ -102,6 +112,25 @@ class ClubService:
         return [Club(**doc.to_dict()) for doc in docs]
 
     @staticmethod
+    def search_clubs(query: str, status: Optional[ClubStatus] = ClubStatus.ACTIVE) -> List[Club]:
+        if not db: raise Exception("Database not connected")
+        
+        # Firestore doesn't support native full-text search.
+        # For this MVP, we'll fetch all clubs of the given status and filter in memory.
+        # This is acceptable for a small number of clubs (< 1000).
+        
+        clubs_ref = db.collection('clubs')
+        if status:
+            clubs_ref = clubs_ref.where('status', '==', status.value)
+            
+        docs = clubs_ref.stream()
+        all_clubs = [Club(**doc.to_dict()) for doc in docs]
+        
+        # Case-insensitive filtering
+        query = query.lower()
+        return [c for c in all_clubs if query in c.name.lower() or query in c.description.lower()]
+
+    @staticmethod
     def add_membership(club_id: str, user_id: str, role: ClubRole) -> ClubMembership:
         if not db: raise Exception("Database not connected")
         
@@ -131,6 +160,11 @@ class ClubService:
             doc_ref.set(membership.dict())
             
         return membership
+
+    @staticmethod
+    def add_executive(club_id: str, user_id: str) -> ClubMembership:
+        """Promote a user to executive of a club"""
+        return ClubService.add_membership(club_id, user_id, ClubRole.EXECUTIVE)
 
     @staticmethod
     def get_user_memberships(user_id: str) -> List[ClubMembership]:
