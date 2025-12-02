@@ -1,18 +1,33 @@
 "use client";
 
 import { useAuth } from "../AuthProvider";
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 export default function DashboardRouter() {
     const { user, profile, loading } = useAuth();
+    const router = useRouter();
 
-    if (loading) return null;
+    useEffect(() => {
+        if (loading) return;
 
-    if (!user) return redirect("/dashboard/public");
+        if (!user) {
+            router.push("/dashboard/public");
+            return;
+        }
 
-    if (profile?.role === "student") return redirect("/dashboard/student");
+        if (profile?.role === "student") {
+            router.push("/dashboard/student");
+            return;
+        }
 
-    if (profile?.role === "admin") return redirect("/dashboard/admin");
+        if (profile?.role === "admin") {
+            router.push("/dashboard/admin");
+            return;
+        }
 
-    return redirect("/dashboard/public");
+        router.push("/dashboard/public");
+    }, [user, profile, loading, router]);
+
+    return null;
 }
