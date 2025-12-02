@@ -1,0 +1,18 @@
+.wrapper {
+  min-height: 100vh;
+}
+
+.header {
+  padding: 14px 24px;
+}
+
+.title {
+  font-size: 40px;
+  font-weight: 900;
+}
+
+.searchBar {
+  height: 42px;
+  padding: 0 12px;
+  border-radius: 10px;
+}
