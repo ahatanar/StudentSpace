@@ -1,215 +1,174 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "../../../AuthProvider";
-import { db } from "../../../../lib/firebase";
-import {
-  collection,
-  addDoc,
-  getDocs,
-  deleteDoc,
-  doc,
-  serverTimestamp,
-  setDoc,
-  updateDoc,
-  getDoc,
-} from "firebase/firestore";
 import { api } from "../../../../lib/api";
+import { redirect } from "next/navigation";
+import Link from "next/link";
 
 export default function ManageClubsPage() {
-  const { profile, loading } = useAuth();
-
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [category, setCategory] = useState("Academic");
+  const { user, profile, loading: authLoading } = useAuth();
   const [clubs, setClubs] = useState<any[]>([]);
-  const [editId, setEditId] = useState<string | null>(null); // TRACK EDIT CLUB
-
-  async function fetchClubs() {
-    try {
-      const clubsData = await api.getClubs("active"); // or "all" if backend supports it? Backend default is active.
-      // Backend returns "type", frontend uses "category". Map it.
-      setClubs(clubsData.map((c: any) => ({ ...c, category: c.type })));
-    } catch (e) {
-      console.error("Failed to fetch clubs", e);
-    }
-  }
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<"pending" | "active" | "suspended">("pending");
 
   useEffect(() => {
-    fetchClubs();
-  }, []);
+    if (user && profile?.role === "admin") {
+      fetchClubs();
+    }
+  }, [user, profile, filter]);
 
+  const fetchClubs = async () => {
+    setLoading(true);
+    try {
+      const data = await api.getClubs(filter);
+      setClubs(data);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  async function handleSubmit(e: any) {
-    e.preventDefault();
-    if (!profile) return;
+  const handleStatusUpdate = async (clubId: string, status: string) => {
+    if (!confirm(`Are you sure you want to mark this club as ${status}?`)) return;
 
     try {
-      if (editId) {
-        // Update not supported by API yet, falling back to Firestore
-        await updateDoc(doc(db, "clubs", editId), {
-          name,
-          description,
-          type: category, // Update type as well
-          category, // Keep category for legacy if needed
-          updatedAt: serverTimestamp(),
-        });
-        // Legacy user record update
-        await setDoc(
-          doc(db, "users", profile.id, "createdClubs", editId),
-          {
-            name,
-            description,
-            category,
-            updatedAt: serverTimestamp(),
-          },
-          { merge: true }
-        );
+      await api.updateClubStatus(clubId, status);
+      fetchClubs(); // Refresh list
+    } catch (error) {
+      console.error("Failed to update status:", error);
+      alert("Failed to update club status");
+    }
+  };
 
-      } else {
-        // Create using API
-        await api.createClub({
-          name,
-          description,
-          type: category,
-        });
-        // No need to update user record manually, backend handles membership
-      }
-
-      resetForm();
+  const handleDelete = async (clubId: string) => {
+    if (!confirm("Are you sure you want to PERMANENTLY delete this club? This cannot be undone.")) return;
+    try {
+      await api.deleteClub(clubId);
       fetchClubs();
     } catch (e) {
-      console.error("Operation failed", e);
-      alert("Operation failed");
+      console.error(e);
+      alert("Failed to delete club");
     }
-  }
-  async function startEdit(id: string) {
-    setEditId(id);
+  };
 
-    // We can use api.getClub(id) here
-    try {
-      const data = await api.getClub(id);
-      setName(data.name);
-      setDescription(data.description);
-      setCategory(data.type || "Academic");
-    } catch (e) {
-      console.error("Failed to fetch club details", e);
-    }
-  }
-  async function deleteClub(id: string) {
-    // Delete not supported by API yet
-    await deleteDoc(doc(db, "clubs", id));
-    await deleteDoc(doc(db, "users", profile?.id || "", "createdClubs", id));
-    fetchClubs();
-  }
-
-  function resetForm() {
-    setEditId(null);
-    setName("");
-    setDescription("");
-    setCategory("Academic");
-  }
-
-  if (loading) return null;
-
-  if (profile?.role !== "admin") {
-    return <div className="p-10 text-red-500">Access denied.</div>;
-  }
+  if (authLoading) return null;
+  if (!user || profile?.role !== "admin") return redirect("/dashboard");
 
   return (
-    <div className="p-6">
-      <h1 className="text-3xl font-bold mb-6">Manage Clubs</h1>
-
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white dark:bg-slate-900 p-6 rounded-lg border border-slate-200 dark:border-slate-700 max-w-md"
-      >
-        <h2 className="text-xl font-semibold mb-4">
-          {editId ? "Update Club" : "Add New Club"}
-        </h2>
-
-        <input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Club Name"
-          required
-          className="w-full p-2 mb-3 rounded border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-800"
-        />
-
-        <textarea
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="Club Description"
-          required
-          className="w-full p-2 mb-3 rounded border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-800"
-        />
-
-        <select
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-          className="w-full p-2 mb-3 rounded border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-800"
-        >
-          <option>Academic</option>
-          <option>Sports</option>
-          <option>Arts</option>
-          <option>Social</option>
-        </select>
-
-        <div className="flex gap-3">
-          <button
-            type="submit"
-            className="flex-1 bg-blue-600 text-white font-semibold py-2 rounded-lg hover:bg-blue-700"
-          >
-            {editId ? "Save Changes" : "Create Club"}
-          </button>
-
-          {editId && (
-            <button
-              type="button"
-              onClick={resetForm}
-              className="flex-1 bg-gray-400 text-white font-semibold py-2 rounded-lg hover:bg-gray-500"
-            >
-              Cancel
-            </button>
-          )}
-        </div>
-      </form>
-
-      <h2 className="text-2xl font-bold mt-10 mb-4">Existing Clubs</h2>
-
-      <div className="space-y-3">
-        {clubs.length === 0 && (
-          <p className="text-slate-500">No clubs added yet.</p>
-        )}
-
-        {clubs.map((club) => (
-          <div
-            key={club.id}
-            className="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg flex justify-between"
-          >
-            <div>
-              <h3 className="font-bold">{club.name}</h3>
-              <p className="text-sm text-slate-600">{club.description}</p>
-              <p className="text-xs text-slate-400">{club.category}</p>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-8">
+      <div className="max-w-7xl mx-auto">
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <div className="flex items-center gap-4 mb-2">
+              <Link href="/dashboard/admin" className="text-indigo-600 hover:underline">
+                ← Back to Dashboard
+              </Link>
             </div>
-
-            <div className="flex gap-3 items-center">
-              <button
-                onClick={() => startEdit(club.id)}
-                className="text-blue-600 hover:underline"
-              >
-                Edit
-              </button>
-
-              <button
-                onClick={() => deleteClub(club.id)}
-                className="text-red-500 hover:underline"
-              >
-                Delete
-              </button>
-            </div>
+            <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">Manage Clubs</h1>
+            <p className="text-gray-600 dark:text-gray-400">Approve new requests and manage existing clubs</p>
           </div>
-        ))}
+        </div>
+
+        {/* Filter Tabs */}
+        <div className="flex gap-2 mb-6 bg-white dark:bg-gray-800 p-1 rounded-xl shadow-sm inline-flex">
+          {(["pending", "active", "suspended"] as const).map((s) => (
+            <button
+              key={s}
+              onClick={() => setFilter(s)}
+              className={`px-6 py-2 rounded-lg font-medium transition-all ${filter === s
+                  ? "bg-indigo-600 text-white shadow-md"
+                  : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+                }`}
+            >
+              {s.charAt(0).toUpperCase() + s.slice(1)}
+            </button>
+          ))}
+        </div>
+
+        {loading ? (
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+          </div>
+        ) : clubs.length === 0 ? (
+          <div className="text-center py-16 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+            <div className="text-6xl mb-4">📭</div>
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">No {filter} clubs</h3>
+            <p className="text-gray-500 dark:text-gray-400">
+              There are currently no clubs with {filter} status.
+            </p>
+          </div>
+        ) : (
+          <div className="grid gap-4">
+            {clubs.map((club) => (
+              <div key={club.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700 flex flex-col md:flex-row justify-between gap-6">
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-2">
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                      {club.name}
+                    </h3>
+                    <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs rounded-md">
+                      {club.type}
+                    </span>
+                  </div>
+                  <p className="text-gray-600 dark:text-gray-400 mb-4">
+                    {club.description}
+                  </p>
+                  <div className="flex gap-4 text-sm text-gray-500">
+                    <span>Created: {new Date(club.created_at).toLocaleDateString()}</span>
+                    <span>•</span>
+                    <span>ID: {club.id}</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  {filter === "pending" && (
+                    <>
+                      <button
+                        onClick={() => handleStatusUpdate(club.id, "active")}
+                        className="px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors shadow-sm"
+                      >
+                        Approve
+                      </button>
+                      <button
+                        onClick={() => handleStatusUpdate(club.id, "suspended")} // Using suspended as reject for now
+                        className="px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors shadow-sm"
+                      >
+                        Reject
+                      </button>
+                    </>
+                  )}
+
+                  {filter === "active" && (
+                    <button
+                      onClick={() => handleStatusUpdate(club.id, "suspended")}
+                      className="px-4 py-2 bg-yellow-600 text-white rounded-lg font-medium hover:bg-yellow-700 transition-colors shadow-sm"
+                    >
+                      Suspend
+                    </button>
+                  )}
+
+                  {filter === "suspended" && (
+                    <button
+                      onClick={() => handleStatusUpdate(club.id, "active")}
+                      className="px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors shadow-sm"
+                    >
+                      Reactivate
+                    </button>
+                  )}
+
+                  <button
+                    onClick={() => handleDelete(club.id)}
+                    className="px-4 py-2 bg-gray-800 text-white rounded-lg font-medium hover:bg-gray-900 transition-colors shadow-sm"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

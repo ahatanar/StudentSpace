@@ -88,6 +88,17 @@ def join_club(club_id: str, user: User = Depends(get_current_user)):
     """Join a club as a member"""
     return ClubService.add_membership(club_id, user.uid, ClubRole.MEMBER)
 
+@app.put("/clubs/{club_id}/status", response_model=Club)
+def update_club_status(club_id: str, status: ClubStatus, user: User = Depends(get_current_user)):
+    """Update club status (Admin only)"""
+    if not user.is_admin:
+        raise HTTPException(status_code=403, detail="Admin permissions required")
+        
+    club = ClubService.update_club_status(club_id, status)
+    if not club:
+        raise HTTPException(status_code=404, detail="Club not found")
+    return club
+
 
 
 

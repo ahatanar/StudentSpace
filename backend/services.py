@@ -138,5 +138,30 @@ class ClubService:
         docs = db.collection('club_memberships').where('user_id', '==', user_id).stream()
         return [ClubMembership(**doc.to_dict()) for doc in docs]
 
+    @staticmethod
+    def update_club_status(club_id: str, status: ClubStatus) -> Optional[Club]:
+        if not db: raise Exception("Database not connected")
+        
+        doc_ref = db.collection('clubs').document(club_id)
+        doc = doc_ref.get()
+        
+        if not doc.exists:
+            return None
+            
+        doc_ref.update({'status': status.value, 'updated_at': datetime.now()})
+        
+        # Return updated club
+        return Club(**doc_ref.get().to_dict())
+
+    @staticmethod
+    def delete_club(club_id: str):
+        if not db: raise Exception("Database not connected")
+        db.collection('clubs').document(club_id).delete()
+        # Also delete memberships? For now, keep them or delete them. 
+        # Ideally we should delete memberships too to keep DB clean.
+        memberships = db.collection('club_memberships').where('club_id', '==', club_id).stream()
+        for m in memberships:
+            m.reference.delete()
+
 
 

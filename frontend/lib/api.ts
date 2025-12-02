@@ -68,4 +68,24 @@ export const api = {
         if (!res.ok) throw new Error("Failed to fetch club types");
         return res.json();
     },
+
+    async updateClubStatus(clubId: string, status: string) {
+        const headers = await getAuthHeaders();
+        const res = await fetch(`${API_BASE_URL}/clubs/${clubId}/status?status=${status}`, {
+            method: "PUT",
+            headers,
+        });
+        if (!res.ok) throw new Error("Failed to update club status");
+        return res.json();
+    },
+
+    async deleteClub(clubId: string) {
+        const headers = await getAuthHeaders();
+        const res = await fetch(`${API_BASE_URL}/clubs/${clubId}`, {
+            method: "DELETE",
+            headers,
+        });
+        if (!res.ok) throw new Error("Failed to delete club");
+        return res.json();
+    },
 };

@@ -23,9 +23,9 @@ export default function AdminDashboard() {
   if (profile?.role !== "admin") return redirect("/dashboard");
 
   async function handleLogout() {
-    setIsLoggingOut(true); 
+    setIsLoggingOut(true);
     await signOut(auth);
-    router.push("/dashboard/public"); 
+    router.push("/dashboard/public");
   }
 
   return (
@@ -35,7 +35,7 @@ export default function AdminDashboard() {
 
         <div className="flex gap-4 items-center">
           <Link href="/dashboard/admin/manage-clubs" className="underline">
-            Manage Clubs
+            Clubs
           </Link>
           <Link href="/dashboard/admin/manage-events" className="underline">
             Manage Events
