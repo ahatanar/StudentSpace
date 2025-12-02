@@ -13,6 +13,7 @@ import { useAuth } from "../../AuthProvider";
 import { signOut } from "firebase/auth";
 import { auth } from "../../../lib/firebase";
 import { useRouter } from "next/navigation";
+import { api } from "../../../lib/api";
 
 interface PublicDashboardProps {
   hideHeader?: boolean;
@@ -25,11 +26,15 @@ export default function PublicDashboard({ hideHeader }: PublicDashboardProps) {
   const router = useRouter();
 
   async function load() {
-    const clubSnap = await getDocs(collection(db, "clubs"));
-    setClubs(clubSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
+    try {
+      const clubsData = await api.getClubs();
+      setClubs(clubsData);
+    } catch (e) {
+      console.error("Failed to load clubs", e);
+    }
 
-    const eventSnap = await getDocs(collection(db, "events"));
-    setEvents(eventSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
+    // Events not implemented in API yet
+    setEvents([]);
   }
 
   useEffect(() => {
@@ -43,15 +48,22 @@ export default function PublicDashboard({ hideHeader }: PublicDashboardProps) {
   async function joinClub(clubId: string, clubData: any) {
     if (!user || profile?.role !== "student") return;
 
-    await setDoc(doc(db, "users", user.uid, "joinedClubs", clubId), {
-      name: clubData.name,
-      description: clubData.description,
-      category: clubData.category,
-    });
+    try {
+      await api.joinClub(clubId);
 
-    profile.joinedClubs = [...(profile?.joinedClubs || []), clubId];
+      // Update local profile state
+      if (profile && profile.joinedClubs) {
+        profile.joinedClubs.push(clubId);
+        // Force re-render if needed, but profile is from context so we might need to reload or just alert
+      }
 
-    alert("Joined club!");
+      alert("Joined club!");
+      // Reload to refresh UI state properly
+      window.location.reload();
+    } catch (e) {
+      console.error("Failed to join club", e);
+      alert("Failed to join club");
+    }
   }
 
   return (
@@ -147,11 +159,10 @@ export default function PublicDashboard({ hideHeader }: PublicDashboardProps) {
                 {profile?.role === "student" && (
                   <button
                     onClick={() => joinClub(club.id, club)}
-                    className={`px-3 py-1 rounded-md text-sm font-semibold ${
-                      profile.joinedClubs?.includes(club.id)
-                        ? "bg-gray-400 text-white cursor-not-allowed"
-                        : "bg-blue-600 text-white hover:bg-blue-700"
-                    }`}
+                    className={`px-3 py-1 rounded-md text-sm font-semibold ${profile.joinedClubs?.includes(club.id)
+                      ? "bg-gray-400 text-white cursor-not-allowed"
+                      : "bg-blue-600 text-white hover:bg-blue-700"
+                      }`}
                     disabled={profile.joinedClubs?.includes(club.id)}
                   >
                     {profile.joinedClubs?.includes(club.id) ? "Joined" : "Join"}

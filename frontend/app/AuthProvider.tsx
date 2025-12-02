@@ -1,105 +1,83 @@
 "use client";
 
-<<<<<<< HEAD
 import {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
+    createContext,
+    useContext,
+    useEffect,
+    useState,
 } from "react";
 
 import { onAuthStateChanged, User } from "firebase/auth";
-import { auth, db } from "../lib/firebase";
-import { doc, getDoc, setDoc, collection, getDocs, } from "firebase/firestore";
+import { auth } from "../lib/firebase";
+import { api } from "../lib/api";
 
 interface Profile {
-  id: string;
-  email: string;
-  name: string;
-  role: "student" | "admin";
-  joinedClubs?: string[];
+    id: string;
+    email: string;
+    name: string;
+    role: "student" | "admin";
+    joinedClubs?: string[];
 }
-=======
-import { createContext, useContext, useEffect, useState } from "react";
-import { User, onAuthStateChanged } from "firebase/auth";
-import { auth } from "../lib/firebase";
->>>>>>> ab7a59b2166292ab2c021622acdfc04e398383b0
 
 interface AuthContextType {
-  user: User | null;
-  profile: Profile | null;
-  loading: boolean;
+    user: User | null;
+    profile: Profile | null;
+    loading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType>({
-  user: null,
-  profile: null,
-  loading: true,
+    user: null,
+    profile: null,
+    loading: true,
 });
 
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [loading, setLoading] = useState(true);
+    const [user, setUser] = useState<User | null>(null);
+    const [profile, setProfile] = useState<Profile | null>(null);
+    const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    return onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        setUser(firebaseUser);
+    useEffect(() => {
+        return onAuthStateChanged(auth, async (firebaseUser) => {
+            if (firebaseUser) {
+                setUser(firebaseUser);
 
-        const userRef = doc(db, "users", firebaseUser.uid);
-        const snap = await getDoc(userRef);
+                try {
+                    // Fetch user profile from backend (creates user if not exists)
+                    const userProfileData = await api.getMyProfile();
 
-        let userProfile: Profile;
+                    // Fetch memberships
+                    const memberships = await api.getMyMemberships();
+                    const joinedClubIds = memberships.map((m: any) => m.club_id);
 
-        // Create user doc if missing
-        if (!snap.exists()) {
-          await setDoc(userRef, {
-            name: firebaseUser.displayName,
-            email: firebaseUser.email,
-            role: "student",
-          });
+                    const userProfile: Profile = {
+                        id: userProfileData.uid,
+                        name: userProfileData.display_name,
+                        email: userProfileData.email,
+                        role: userProfileData.is_admin ? "admin" : "student",
+                        joinedClubs: joinedClubIds,
+                    };
 
-          userProfile = {
-            id: firebaseUser.uid,
-            name: firebaseUser.displayName || "",
-            email: firebaseUser.email || "",
-            role: "student",
-            joinedClubs: [],
-          };
-        } else {
-          userProfile = {
-            id: snap.id,
-            ...(snap.data() as any),
-            joinedClubs: [],
-          };
-        }
+                    setProfile(userProfile);
+                } catch (error) {
+                    console.error("Error fetching profile:", error);
+                    setProfile(null);
+                }
 
-        // Load joined clubs from subcollection
-        const joinedSnap = await getDocs(
-          collection(db, "users", firebaseUser.uid, "joinedClubs")
-        );
+            } else {
+                setUser(null);
+                setProfile(null);
+            }
 
-        const joinedIds = joinedSnap.docs.map((d) => d.id);
-        userProfile.joinedClubs = joinedIds;
+            setLoading(false);
+        });
+    }, []);
 
-        setProfile(userProfile);
-
-      } else {
-        setUser(null);
-        setProfile(null);
-      }
-
-      setLoading(false);
-    });
-  }, []);
-
-  return (
-    <AuthContext.Provider value={{ user, profile, loading }}>
-      {children}
-    </AuthContext.Provider>
-  );
+    return (
+        <AuthContext.Provider value={{ user, profile, loading }}>
+            {children}
+        </AuthContext.Provider>
+    );
 }
 
 export const useAuth = () => useContext(AuthContext);

@@ -1,29 +1,108 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Depends, Header
 from fastapi.middleware.cors import CORSMiddleware
-
-# How to run:
-# 1. Ensure you have fastapi and uvicorn installed: pip install fastapi uvicorn
-# 2. Run the server: uvicorn api:app --reload
-#    (Or: python -m uvicorn api:app --reload)
-# 3. Access the API at http://localhost:8000
-# 4. View documentation at http://localhost:8000/docs
-#
-# Data Source:
-# This API currently reads from '202601.json' in the same directory.
-# Ensure this file exists and contains valid course data.
+from typing import List, Optional
+from firebase_admin import auth
+from models import User, Club, ClubRole, ClubStatus
+from services import UserService, ClubService
+from heatmap_builder import build_simple_heatmap
 
 app = FastAPI()
 
-# Add CORS middleware to allow requests from the frontend (e.g., localhost:3000)
+# CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins for now (dev mode)
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-from heatmap_builder import build_simple_heatmap
+# ============================================================================
+# AUTH DEPENDENCY
+# ============================================================================
+
+async def get_current_user(authorization: Optional[str] = Header(None)) -> User:
+    """
+    Verify Firebase ID Token and return the User object.
+    """
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing or invalid Authorization header")
+
+    token = authorization.split("Bearer ")[1]
+    
+    try:
+        # Verify token with Firebase Admin
+        decoded_token = auth.verify_id_token(token)
+        uid = decoded_token['uid']
+        
+        # Get user from DB
+        user = UserService.get_user(uid)
+        if not user:
+            # Create user if not exists (first login)
+            user = User(
+                uid=uid,
+                email=decoded_token.get('email', ''),
+                display_name=decoded_token.get('name', 'Unknown'),
+                is_admin=False
+            )
+            UserService.create_or_update_user(user)
+            
+        return user
+        
+    except Exception as e:
+        print(f"Auth Error: {e}")
+        raise HTTPException(status_code=401, detail="Invalid authentication token")
+
+
+# ============================================================================
+# CLUB ENDPOINTS
+# ============================================================================
+
+@app.post("/clubs", response_model=Club)
+def create_club(club: Club, user: User = Depends(get_current_user)):
+    """Create a new club (Pending approval)"""
+    club.created_by = user.uid
+    club.president_id = user.uid
+    return ClubService.create_club(club, user)
+
+@app.get("/clubs", response_model=List[Club])
+def list_clubs(status: str = "active"):
+    """List all clubs (default: active only)"""
+    club_status = ClubStatus(status) if status else None
+    return ClubService.list_clubs(club_status)
+
+@app.get("/clubs/{club_id}", response_model=Club)
+def get_club(club_id: str):
+    club = ClubService.get_club(club_id)
+    if not club:
+        raise HTTPException(status_code=404, detail="Club not found")
+    return club
+
+@app.post("/clubs/{club_id}/join")
+def join_club(club_id: str, user: User = Depends(get_current_user)):
+    """Join a club as a member"""
+    return ClubService.add_membership(club_id, user.uid, ClubRole.MEMBER)
+
+
+
+
+
+# ============================================================================
+# USER ENDPOINTS
+# ============================================================================
+
+@app.get("/users/me", response_model=User)
+def get_my_profile(user: User = Depends(get_current_user)):
+    return user
+
+@app.get("/users/me/memberships")
+def get_my_memberships(user: User = Depends(get_current_user)):
+    return ClubService.get_user_memberships(user.uid)
+
+
+# ============================================================================
+# HEATMAP (EXISTING)
+# ============================================================================
 
 @app.get("/health")
 def health_check():
@@ -31,24 +110,9 @@ def health_check():
 
 @app.get("/heatmap")
 def get_heatmap(interval: int = 30, term: str = "202601", include_raw: bool = False):
-    """
-    Get heatmap data with configurable time interval and term.
-    
-    Args:
-        interval: Minutes per time slot (default 30, supports 10, 15, 30, etc.)
-        term: Term code (default "202601", options: "202509", "202601")
-        include_raw: Include raw section data (default False to reduce payload size)
-    
-    Returns:
-        Heatmap data with the specified granularity for the selected term
-    """
     result = build_simple_heatmap(interval, term)
-    
-    # Exclude rawSections by default to prevent large payloads from hanging
     if not include_raw and 'rawSections' in result:
-        # Keep count but remove the actual data
         raw_count = len(result['rawSections'])
         del result['rawSections']
         result['rawSectionsCount'] = raw_count
-    
     return result

@@ -10,6 +10,7 @@ import {
   deleteDoc,
 } from "firebase/firestore";
 import Link from "next/link";
+import { api } from "../../../../lib/api";
 
 export default function MyClubsPage() {
   const { user, profile, loading } = useAuth();
@@ -21,32 +22,31 @@ export default function MyClubsPage() {
   if (profile?.role !== "student") return redirect("/dashboard");
 
   async function loadClubs() {
-    if (!profile?.joinedClubs) return;
-
-    const details: any[] = [];
-
-    for (const clubId of profile.joinedClubs) {
-      const ref = doc(db, "clubs", clubId);
-      const snap = await getDoc(ref);
-
-      if (snap.exists()) {
-        details.push({ id: clubId, ...snap.data() });
-      }
+    if (!profile?.joinedClubs) {
+      setLoadingClubs(false);
+      return;
     }
 
-    setClubDetails(details);
+    try {
+      const promises = profile.joinedClubs.map(id => api.getClub(id).catch(e => null));
+      const results = await Promise.all(promises);
+
+      const validClubs = results.filter(c => c !== null).map((c: any) => ({
+        ...c,
+        category: c.type // Map type to category
+      }));
+
+      setClubDetails(validClubs);
+    } catch (e) {
+      console.error("Failed to load clubs", e);
+    }
+
     setLoadingClubs(false);
   }
 
   async function leaveClub(clubId: string) {
-    if (!user) return;
-
-    
-    const ref = doc(db, "users", user.uid, "joinedClubs", clubId);
-    await deleteDoc(ref);
-
-    setClubDetails((prev) => prev.filter((c) => c.id !== clubId));
-    profile!.joinedClubs = profile!.joinedClubs?.filter((id) => id !== clubId) || [];
+    // Leave club not supported by API yet
+    alert("Leaving clubs is not supported in this version yet.");
   }
 
   useEffect(() => {

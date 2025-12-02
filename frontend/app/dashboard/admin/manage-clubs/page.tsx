@@ -14,6 +14,7 @@ import {
   updateDoc,
   getDoc,
 } from "firebase/firestore";
+import { api } from "../../../../lib/api";
 
 export default function ManageClubsPage() {
   const { profile, loading } = useAuth();
@@ -25,75 +26,78 @@ export default function ManageClubsPage() {
   const [editId, setEditId] = useState<string | null>(null); // TRACK EDIT CLUB
 
   async function fetchClubs() {
-    const snap = await getDocs(collection(db, "clubs"));
-    setClubs(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+    try {
+      const clubsData = await api.getClubs("active"); // or "all" if backend supports it? Backend default is active.
+      // Backend returns "type", frontend uses "category". Map it.
+      setClubs(clubsData.map((c: any) => ({ ...c, category: c.type })));
+    } catch (e) {
+      console.error("Failed to fetch clubs", e);
+    }
   }
 
   useEffect(() => {
     fetchClubs();
   }, []);
 
-  
+
   async function handleSubmit(e: any) {
     e.preventDefault();
     if (!profile) return;
 
-    if (editId) {
-  
-      await updateDoc(doc(db, "clubs", editId), {
-        name,
-        description,
-        category,
-        updatedAt: serverTimestamp(),
-      });
-      await setDoc(
-        doc(db, "users", profile.id, "createdClubs", editId),
-        {
+    try {
+      if (editId) {
+        // Update not supported by API yet, falling back to Firestore
+        await updateDoc(doc(db, "clubs", editId), {
           name,
           description,
-          category,
+          type: category, // Update type as well
+          category, // Keep category for legacy if needed
           updatedAt: serverTimestamp(),
-        },
-        { merge: true }
-      );
+        });
+        // Legacy user record update
+        await setDoc(
+          doc(db, "users", profile.id, "createdClubs", editId),
+          {
+            name,
+            description,
+            category,
+            updatedAt: serverTimestamp(),
+          },
+          { merge: true }
+        );
 
-    } else {
-      const clubRef = await addDoc(collection(db, "clubs"), {
-        name,
-        description,
-        category,
-        createdBy: profile.id,
-        createdAt: serverTimestamp(),
-      });
-
-      await setDoc(
-        doc(db, "users", profile.id, "createdClubs", clubRef.id),
-        {
+      } else {
+        // Create using API
+        await api.createClub({
           name,
           description,
-          category,
-          createdAt: serverTimestamp(),
-        }
-      );
-    }
+          type: category,
+        });
+        // No need to update user record manually, backend handles membership
+      }
 
-    resetForm();
-    fetchClubs();
+      resetForm();
+      fetchClubs();
+    } catch (e) {
+      console.error("Operation failed", e);
+      alert("Operation failed");
+    }
   }
   async function startEdit(id: string) {
     setEditId(id);
 
-    const ref = doc(db, "clubs", id);
-    const snap = await getDoc(ref);
-
-    if (snap.exists()) {
-      const data: any = snap.data();
+    // We can use api.getClub(id) here
+    try {
+      const data = await api.getClub(id);
       setName(data.name);
       setDescription(data.description);
-      setCategory(data.category);
+      setCategory(data.type || "Academic");
+    } catch (e) {
+      console.error("Failed to fetch club details", e);
     }
   }
   async function deleteClub(id: string) {
+    // Delete not supported by API yet
     await deleteDoc(doc(db, "clubs", id));
     await deleteDoc(doc(db, "users", profile?.id || "", "createdClubs", id));
     fetchClubs();
