@@ -1,5 +1,6 @@
 "use client";
 
+<<<<<<< HEAD
 import {
   createContext,
   useContext,
@@ -18,6 +19,11 @@ interface Profile {
   role: "student" | "admin";
   joinedClubs?: string[];
 }
+=======
+import { createContext, useContext, useEffect, useState } from "react";
+import { User, onAuthStateChanged } from "firebase/auth";
+import { auth } from "../lib/firebase";
+>>>>>>> ab7a59b2166292ab2c021622acdfc04e398383b0
 
 interface AuthContextType {
   user: User | null;
