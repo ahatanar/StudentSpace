@@ -100,6 +100,39 @@ class ClubMembership(BaseModel):
     joined_at: Optional[datetime] = None
 
 
+class Event(BaseModel):
+    """
+    Event model for club activities.
+
+    Only Presidents and Executives of a club can create events.
+    System admins may edit/delete any event.
+
+    Fields:
+    - id: Firestore auto-generated ID
+    - club_id: Which club the event belongs to
+    - name: Event title
+    - description: Short event details
+    - location: Where the event is being held
+    - start_time: Event start datetime
+    - end_time: Event end datetime
+    - created_by: UID of event creator
+    - created_at: Timestamp when created
+    - updated_at: Timestamp when updated
+
+    These fields support calendar views + filtering on frontend.
+    """
+
+    id: Optional[str] = None
+    club_id: str
+    name: str
+    description: Optional[str] = None
+    location: Optional[str] = None
+    start_time: datetime
+    end_time: Optional[datetime] = None
+
+    created_by: Optional[str] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
 
 
@@ -217,3 +250,44 @@ def get_user_memberships(user_id: str, db) -> list:
         .get()
     
     return [ClubMembership(id=m.id, **m.to_dict()) for m in memberships]
+
+
+
+def can_edit_event(user_id: str, event: dict, db, user: Optional[User] = None) -> bool:
+    """
+    Check if user can edit or delete a specific event.
+
+    Permissions:
+    - System admins: Can edit/delete ANY event
+    - Club presidents/executives: Can edit/delete events for THEIR club
+    - Event creators (optional future feature): Can edit their own event
+
+    Args:
+        user_id: Firebase UID
+        event: Event Firestore document as dict
+        db: Firestore DB instance
+        user: Optional User model (skip admin lookup)
+
+    Returns:
+        True if user can edit/delete this event
+    """
+
+    club_id = event.get("club_id")
+
+    # System admin override
+    if user and user.is_admin:
+        return True
+
+    # OPTIONAL: If you later store "created_by" on events
+    if event.get("created_by") == user_id:
+        return True
+
+    # Check if user is executive or president of this club
+    membership = db.collection("club_memberships") \
+        .where("user_id", "==", user_id) \
+        .where("club_id", "==", club_id) \
+        .where("role", "in", [ClubRole.EXECUTIVE.value, ClubRole.PRESIDENT.value]) \
+        .limit(1) \
+        .get()
+
+    return len(list(membership)) > 0
