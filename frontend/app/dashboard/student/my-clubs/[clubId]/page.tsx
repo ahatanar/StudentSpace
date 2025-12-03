@@ -17,18 +17,21 @@ export default function ClubPage() {
   const [club, setClub] = useState<Club | null>(null);
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   async function load() {
     if (!clubId) return;
     setLoading(true);
     try {
-      const [clubData, clubEvents] = await Promise.all([
+      const [clubData, clubEvents, membership] = await Promise.all([
         api.getClub(clubId as string).catch(() => null),
         api.getEventsByClub(clubId as string).catch(() => []),
+        api.getMyMembershipForClub(clubId as string).catch(() => null),
       ]);
 
       setClub(clubData ?? { id: clubId });
       setEvents(Array.isArray(clubEvents) ? clubEvents : []);
+      setUserRole(membership?.role || null);
     } finally {
       setLoading(false);
     }
@@ -77,12 +80,15 @@ export default function ClubPage() {
                   ← Back to My Clubs
                 </Link>
 
-                <Link
-                  href={`/dashboard/student/my-clubs/${clubId}/new-event`}
-                  className="px-5 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition"
-                >
-                  New Event
-                </Link>
+                {/* Only show New Event button to presidents and executives */}
+                {(userRole === "president" || userRole === "executive") && (
+                  <Link
+                    href={`/dashboard/student/my-clubs/${clubId}/new-event`}
+                    className="px-5 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition"
+                  >
+                    New Event
+                  </Link>
+                )}
               </div>
             </div>
           </div>
@@ -111,7 +117,7 @@ export default function ClubPage() {
                   No Events Yet
                 </h3>
                 <p className="text-gray-500 max-w-md mx-auto mb-6">
-                  This club doesn’t have any events scheduled yet.
+                  This club doesn't have any events scheduled yet.
                 </p>
               </div>
             )}
@@ -134,21 +140,24 @@ export default function ClubPage() {
                     )}
                   </div>
 
-                  <div className="flex gap-3">
-                    <Link
-                      href={`/dashboard/student/my-clubs/${clubId}/event/${ev.id}`}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition"
-                    >
-                      Edit
-                    </Link>
+                  {/* Only show edit/delete buttons to presidents and executives */}
+                  {(userRole === "president" || userRole === "executive") && (
+                    <div className="flex gap-3">
+                      <Link
+                        href={`/dashboard/student/my-clubs/${clubId}/event/${ev.id}`}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition"
+                      >
+                        Edit
+                      </Link>
 
-                    <button
-                      onClick={() => handleDelete(ev.id)}
-                      className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700 transition"
-                    >
-                      Delete
-                    </button>
-                  </div>
+                      <button
+                        onClick={() => handleDelete(ev.id)}
+                        className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700 transition"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

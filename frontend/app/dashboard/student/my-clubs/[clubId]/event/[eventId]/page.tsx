@@ -10,6 +10,8 @@ export default function EditEventPage() {
   const router = useRouter();
 
   const [event, setEvent] = useState<any>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   function toLocalInputValue(date: any) {
     if (!date) return "";
@@ -19,25 +21,36 @@ export default function EditEventPage() {
 
   useEffect(() => {
     async function load() {
-      const data = await api.getEvent(eventId as string);
-      if (!data) return;
+      try {
+        const [eventData, membership] = await Promise.all([
+          api.getEvent(eventId as string),
+          api.getMyMembershipForClub(clubId as string).catch(() => null),
+        ]);
 
-      setEvent({
-        ...data,
-        start_time: toLocalInputValue(data.start_time),
-        end_time: toLocalInputValue(data.end_time),
-      });
+        if (!eventData) {
+          router.push(`/dashboard/student/my-clubs/${clubId}`);
+          return;
+        }
+
+        setEvent({
+          ...eventData,
+          start_time: toLocalInputValue(eventData.start_time),
+          end_time: toLocalInputValue(eventData.end_time),
+        });
+
+        const role = membership?.role || null;
+        setUserRole(role);
+
+        // Check permission and redirect if needed
+        if (role !== "president" && role !== "executive") {
+          router.push(`/dashboard/student/my-clubs/${clubId}`);
+        }
+      } finally {
+        setLoading(false);
+      }
     }
     load();
   }, []);
-
-  if (!event) {
-    return (
-      <div className="flex justify-center items-center min-h-screen text-lg text-gray-600">
-        Loading...
-      </div>
-    );
-  }
 
   async function handleUpdate(e: any) {
     e.preventDefault();
@@ -54,8 +67,17 @@ export default function EditEventPage() {
   }
 
   async function handleDelete() {
+    if (!confirm("Are you sure you want to delete this event?")) return;
     await api.deleteEvent(eventId as string);
     router.push(`/dashboard/student/my-clubs/${clubId}`);
+  }
+
+  if (loading || !event) {
+    return (
+      <div className="flex justify-center items-center min-h-screen text-lg text-gray-600">
+        Loading...
+      </div>
+    );
   }
 
   return (
@@ -95,6 +117,7 @@ export default function EditEventPage() {
                 className="w-full p-3 border rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500"
                 value={event.name}
                 onChange={(e) => setEvent({ ...event, name: e.target.value })}
+                required
               />
             </div>
 
@@ -132,6 +155,7 @@ export default function EditEventPage() {
                 onChange={(e) =>
                   setEvent({ ...event, start_time: e.target.value })
                 }
+                required
               />
             </div>
 
@@ -150,6 +174,7 @@ export default function EditEventPage() {
 
             {/* Save Button */}
             <button
+              type="submit"
               className="w-full bg-blue-600 text-white p-3 rounded-lg font-semibold hover:bg-blue-700 transition"
             >
               Save Changes

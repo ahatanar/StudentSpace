@@ -2,7 +2,7 @@ import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, query, updateDoc, 
 import { auth, db } from "./firebase";
 
 const API_BASE_URL = "http://localhost:8000";
-import { Timestamp } from "firebase/firestore"; 
+import { Timestamp } from "firebase/firestore";
 
 
 export interface FirestoreEvent {
@@ -29,16 +29,16 @@ async function getAuthHeaders(): Promise<HeadersInit> {
 }
 
 export const api = {
-    async getClubs(status = "active", search?: string) {
-        const headers = await getAuthHeaders();
-        let url = `${API_BASE_URL}/clubs?status=${status}`;
-        if (search) {
-            url += `&search=${encodeURIComponent(search)}`;
-        }
-        const res = await fetch(url, { headers });
-        if (!res.ok) throw new Error("Failed to fetch clubs");
-        return res.json();
-    },
+  async getClubs(status = "active", search?: string) {
+    const headers = await getAuthHeaders();
+    let url = `${API_BASE_URL}/clubs?status=${status}`;
+    if (search) {
+      url += `&search=${encodeURIComponent(search)}`;
+    }
+    const res = await fetch(url, { headers });
+    if (!res.ok) throw new Error("Failed to fetch clubs");
+    return res.json();
+  },
 
   async getClub(id: string) {
     const headers = await getAuthHeaders();
@@ -82,6 +82,11 @@ export const api = {
     });
     if (!res.ok) throw new Error("Failed to fetch memberships");
     return res.json();
+  },
+
+  async getMyMembershipForClub(clubId: string) {
+    const memberships = await this.getMyMemberships();
+    return memberships.find((m: any) => m.club_id === clubId) || null;
   },
 
   async getClubTypes() {
@@ -136,14 +141,14 @@ export const api = {
   },
 
   // --- READ SINGLE EVENT ---
-    async getEvent(eventId: string): Promise<FirestoreEvent | null> {
-        const docRef = doc(db, "events", eventId);
-        const snap = await getDoc(docRef);
-        if (!snap.exists()) return null;
+  async getEvent(eventId: string): Promise<FirestoreEvent | null> {
+    const docRef = doc(db, "events", eventId);
+    const snap = await getDoc(docRef);
+    if (!snap.exists()) return null;
 
-        const data = snap.data() as Omit<FirestoreEvent, "id">;
-        return { id: snap.id, ...data };
-    },
+    const data = snap.data() as Omit<FirestoreEvent, "id">;
+    return { id: snap.id, ...data };
+  },
 
 
   // --- UPDATE EVENT ---
