@@ -163,3 +163,31 @@ def test_create_event_forbidden(mock_auth, mock_firestore):
         
         response = client.post("/events", json=payload)
         assert response.status_code == 403 # Forbidden
+
+def test_delete_club_success(mock_firestore):
+    """Test deleting a club as admin"""
+    # Create admin user
+    admin_user = User(
+        uid="admin_123",
+        email="admin@example.com",
+        display_name="Admin User",
+        is_admin=True
+    )
+    
+    # Override auth with admin user
+    app.dependency_overrides[get_current_user] = lambda: admin_user
+    
+    response = client.delete(f"/clubs/{MOCK_CLUB_ID}")
+    assert response.status_code == 200
+    assert response.json()["message"] == "Club deleted successfully"
+    assert response.json()["club_id"] == MOCK_CLUB_ID
+    
+    # Clean up
+    app.dependency_overrides = {}
+
+def test_delete_club_forbidden(mock_auth, mock_firestore):
+    """Test deleting a club as non-admin user"""
+    response = client.delete(f"/clubs/{MOCK_CLUB_ID}")
+    assert response.status_code == 403  # Forbidden
+    assert "Admin permissions required" in response.json()["detail"]
+

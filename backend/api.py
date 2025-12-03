@@ -103,6 +103,19 @@ def update_club_status(club_id: str, status: ClubStatus, user: User = Depends(ge
         raise HTTPException(status_code=404, detail="Club not found")
     return club
 
+@app.delete("/clubs/{club_id}")
+def delete_club(club_id: str, user: User = Depends(get_current_user)):
+    """Delete a club (Admin only)"""
+    if not user.is_admin:
+        raise HTTPException(status_code=403, detail="Admin permissions required")
+    
+    club = ClubService.get_club(club_id)
+    if not club:
+        raise HTTPException(status_code=404, detail="Club not found")
+    
+    ClubService.delete_club(club_id)
+    return {"message": "Club deleted successfully", "club_id": club_id}
+
 
 
 
