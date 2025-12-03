@@ -41,10 +41,6 @@ export default function AdminDashboard() {
           <Link href="/dashboard/admin/heatmap" className="underline">
             Heatmap
           </Link>
-          <Link href="/account" className="underline">
-            My Account
-          </Link>
-
           <button
             onClick={handleLogout}
             className="px-3 py-1 bg-red-600 text-white rounded-md text-sm hover:bg-red-800"

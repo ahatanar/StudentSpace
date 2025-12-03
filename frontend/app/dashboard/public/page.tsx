@@ -237,12 +237,6 @@ export default function PublicDashboard({
                   Discover clubs, join events, and get involved on campus.
                 </p>
                 <div className="mt-6">
-                  <Link
-                    href="/login"
-                    className="bg-white text-blue-600 font-bold px-6 py-3 rounded-lg hover:bg-gray-100 transition inline-block"
-                  >
-                    Get Started
-                  </Link>
                 </div>
               </div>
             </section>
