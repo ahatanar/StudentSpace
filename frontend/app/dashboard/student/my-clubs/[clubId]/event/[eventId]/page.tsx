@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../../../../../../../lib/api";
 import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function EditEventPage() {
   const { clubId, eventId } = useParams();
@@ -11,36 +12,32 @@ export default function EditEventPage() {
   const [event, setEvent] = useState<any>(null);
 
   function toLocalInputValue(date: any) {
-  if (!date) return "";
-
-  // If it’s a Firestore Timestamp → convert to JS Date
-  const d = date?.toDate ? date.toDate() : new Date(date);
-
-  // Convert to `YYYY-MM-DDTHH:mm` for datetime-local
-  return d.toISOString().slice(0, 16);
-}
-
-  useEffect(() => {
-  async function load() {
-    const data = await api.getEvent(eventId as string);
-
-    console.log("🔥 RAW EVENT FROM FIRESTORE:", data);
-
-    if (!data) return;
-
-    setEvent({
-      ...data,
-      start_time: toLocalInputValue(data.start_time),
-      end_time: toLocalInputValue(data.end_time),
-    });
+    if (!date) return "";
+    const d = date?.toDate ? date.toDate() : new Date(date);
+    return d.toISOString().slice(0, 16);
   }
 
-  load();
-}, []);
+  useEffect(() => {
+    async function load() {
+      const data = await api.getEvent(eventId as string);
+      if (!data) return;
 
+      setEvent({
+        ...data,
+        start_time: toLocalInputValue(data.start_time),
+        end_time: toLocalInputValue(data.end_time),
+      });
+    }
+    load();
+  }, []);
 
-
-  if (!event) return <p>Loading...</p>;
+  if (!event) {
+    return (
+      <div className="flex justify-center items-center min-h-screen text-lg text-gray-600">
+        Loading...
+      </div>
+    );
+  }
 
   async function handleUpdate(e: any) {
     e.preventDefault();
@@ -62,60 +59,114 @@ export default function EditEventPage() {
   }
 
   return (
-    <div className="p-8 max-w-xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4">Edit Event</h1>
+    <div className="flex min-h-screen bg-gray-50">
+      <main className="flex-1">
 
-      <form onSubmit={handleUpdate} className="space-y-4">
-        <input
-          className="w-full p-2 border rounded"
-          value={event.name}
-          onChange={(e) => setEvent({ ...event, name: e.target.value })}
-        />
+        {/* Sticky Header */}
+        <header className="sticky top-0 z-10 bg-white/80 backdrop-blur-sm border-b border-gray-200">
+          <div className="max-w-screen-lg mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between h-20">
 
-        <textarea
-          className="w-full p-2 border rounded"
-          value={event.description}
-          onChange={(e) => setEvent({ ...event, description: e.target.value })}
-        />
+              <h1 className="text-3xl font-bold text-gray-900">Edit Event</h1>
 
-        <input
-          className="w-full p-2 border rounded"
-          value={event.location}
-          onChange={(e) => setEvent({ ...event, location: e.target.value })}
-        />
+              <div className="flex items-center gap-3">
+                <Link
+                  href={`/dashboard/student/my-clubs/${clubId}`}
+                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-semibold hover:bg-gray-200 transition"
+                >
+                  ← Back to Club
+                </Link>
+              </div>
 
-        <label className="block text-sm">Start Time</label>
-        <input
-          type="datetime-local"
-          className="w-full p-2 border rounded"
-          value={event.start_time}
-          onChange={(e) =>
-            setEvent({ ...event, start_time: e.target.value })
-          }
-        />
+            </div>
+          </div>
+        </header>
 
-        <label className="block text-sm">End Time</label>
-        <input
-          type="datetime-local"
-          className="w-full p-2 border rounded"
-          value={event.end_time}
-          onChange={(e) =>
-            setEvent({ ...event, end_time: e.target.value })
-          }
-        />
+        {/* Main Form */}
+        <div className="p-4 sm:p-6 lg:p-8 max-w-screen-lg mx-auto">
+          <form
+            onSubmit={handleUpdate}
+            className="bg-white border border-gray-200 rounded-xl shadow-sm p-6 space-y-6"
+          >
+            {/* Name */}
+            <div>
+              <label className="block text-sm text-gray-700 mb-1">Name</label>
+              <input
+                className="w-full p-3 border rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500"
+                value={event.name}
+                onChange={(e) => setEvent({ ...event, name: e.target.value })}
+              />
+            </div>
 
-        <button className="px-4 py-2 bg-blue-600 text-white rounded w-full">
-          Save Changes
-        </button>
+            {/* Description */}
+            <div>
+              <label className="block text-sm text-gray-700 mb-1">Description</label>
+              <textarea
+                className="w-full p-3 border rounded-lg min-h-[120px] text-gray-900 focus:ring-2 focus:ring-blue-500"
+                value={event.description}
+                onChange={(e) =>
+                  setEvent({ ...event, description: e.target.value })
+                }
+              />
+            </div>
 
-        <button
-          type="button"
-          onClick={handleDelete}
-          className="px-4 py-2 bg-red-600 text-white rounded w-full mt-2"
-        >
-          Delete Event
-        </button>
-      </form>
+            {/* Location */}
+            <div>
+              <label className="block text-sm text-gray-700 mb-1">Location</label>
+              <input
+                className="w-full p-3 border rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500"
+                value={event.location}
+                onChange={(e) =>
+                  setEvent({ ...event, location: e.target.value })
+                }
+              />
+            </div>
+
+            {/* Start Time */}
+            <div>
+              <label className="block text-sm text-gray-700 mb-1">Start Time</label>
+              <input
+                type="datetime-local"
+                className="w-full p-3 border rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500"
+                value={event.start_time}
+                onChange={(e) =>
+                  setEvent({ ...event, start_time: e.target.value })
+                }
+              />
+            </div>
+
+            {/* End Time */}
+            <div>
+              <label className="block text-sm text-gray-700 mb-1">End Time</label>
+              <input
+                type="datetime-local"
+                className="w-full p-3 border rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500"
+                value={event.end_time}
+                onChange={(e) =>
+                  setEvent({ ...event, end_time: e.target.value })
+                }
+              />
+            </div>
+
+            {/* Save Button */}
+            <button
+              className="w-full bg-blue-600 text-white p-3 rounded-lg font-semibold hover:bg-blue-700 transition"
+            >
+              Save Changes
+            </button>
+
+            {/* Delete Button */}
+            <button
+              type="button"
+              onClick={handleDelete}
+              className="w-full bg-red-600 text-white p-3 rounded-lg font-semibold hover:bg-red-700 transition"
+            >
+              Delete Event
+            </button>
+
+          </form>
+        </div>
+      </main>
     </div>
   );
 }
