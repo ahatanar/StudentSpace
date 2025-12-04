@@ -144,6 +144,29 @@ export const api = {
     return memberships.find((m: any) => m.club_id === clubId) || null;
   },
 
+  async checkIsExecutive(): Promise<{ is_executive: boolean }> {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${API_BASE_URL}/users/me/is-executive`, { headers });
+    if (!res.ok) {
+      // If not authenticated or error, return false
+      return { is_executive: false };
+    }
+    return res.json();
+  },
+
+  async getEvents(startDate?: string, endDate?: string, clubId?: string) {
+    const headers = await getAuthHeaders();
+    const params = new URLSearchParams();
+    if (startDate) params.append('start_date', startDate);
+    if (endDate) params.append('end_date', endDate);
+    if (clubId) params.append('club_id', clubId);
+
+    const url = `${API_BASE_URL}/events${params.toString() ? '?' + params.toString() : ''}`;
+    const res = await fetch(url, { headers });
+    if (!res.ok) throw new Error("Failed to fetch events");
+    return res.json();
+  },
+
   async getClubTypes() {
     const headers = await getAuthHeaders();
     const res = await fetch(`${API_BASE_URL}/club-types`, { headers });
