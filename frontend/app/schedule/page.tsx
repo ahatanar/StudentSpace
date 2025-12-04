@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../AuthProvider';
 import { api } from '../../lib/api';
 import HeatmapDisplay from '@/components/HeatmapDisplay';
+import EventsCalendar from '@/components/EventsCalendar';
 import Link from 'next/link';
 
 type TabType = 'events' | 'heatmap';
@@ -79,8 +80,8 @@ export default function SchedulePage() {
                         <button
                             onClick={() => setActiveTab('events')}
                             className={`px-6 py-3 rounded-lg font-semibold transition-all ${activeTab === 'events'
-                                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md'
-                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md'
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                 }`}
                         >
                             📅 Events Calendar
@@ -90,8 +91,8 @@ export default function SchedulePage() {
                             <button
                                 onClick={() => setActiveTab('heatmap')}
                                 className={`px-6 py-3 rounded-lg font-semibold transition-all ${activeTab === 'heatmap'
-                                        ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md'
-                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                    ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md'
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                     }`}
                             >
                                 🔥 Campus Heatmap
@@ -108,25 +109,7 @@ export default function SchedulePage() {
 
                 {/* Tab Content */}
                 {activeTab === 'events' && (
-                    <div className="bg-white rounded-2xl shadow-xl p-8">
-                        <h2 className="text-3xl font-bold text-gray-900 mb-4">
-                            📅 Events Calendar
-                        </h2>
-                        <p className="text-gray-600 mb-8">
-                            View upcoming events from all clubs. Calendar feature coming soon!
-                        </p>
-
-                        {/* Placeholder for calendar - will be implemented later */}
-                        <div className="border-2 border-dashed border-gray-300 rounded-xl p-12 text-center">
-                            <div className="text-6xl mb-4">🗓️</div>
-                            <h3 className="text-xl font-semibold text-gray-700 mb-2">
-                                Calendar Coming Soon
-                            </h3>
-                            <p className="text-gray-500">
-                                Week, Month, and Semester views with all club events will be available here.
-                            </p>
-                        </div>
-                    </div>
+                    <EventsCalendar />
                 )}
 
                 {activeTab === 'heatmap' && isExecutive && (
