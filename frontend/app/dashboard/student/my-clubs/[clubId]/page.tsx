@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
 import { api } from "../../../../../lib/api";
+import { useAuth } from "../../../../AuthProvider";
 
 type Club = {
   id: string;
@@ -31,6 +32,7 @@ type Event = {
 export default function ClubPage() {
   const { clubId } = useParams();
   const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
 
   const [club, setClub] = useState<Club | null>(null);
   const [events, setEvents] = useState<Event[]>([]);
@@ -57,14 +59,20 @@ export default function ClubPage() {
       setUserRole(membership?.role || null);
       setIsMember(!!membership);
       setMembers(Array.isArray(clubMembers) ? clubMembers : []);
+    } catch (err) {
+      console.error("Error loading club data:", err);
     } finally {
       setLoading(false);
     }
   }
 
   useEffect(() => {
-    load();
-  }, [clubId]);
+    // Wait for auth to be ready before making API calls
+    if (!authLoading && clubId) {
+      load();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clubId, authLoading]);
 
   async function handleDelete(eventId: string) {
     if (!confirm("Delete this event?")) return;
@@ -128,7 +136,7 @@ export default function ClubPage() {
     return (roleOrder[a.role] ?? 3) - (roleOrder[b.role] ?? 3);
   });
 
-  if (loading) {
+  if (loading || authLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen text-lg text-gray-600">
         Loading club...
@@ -215,7 +223,7 @@ export default function ClubPage() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
-                  <h3 className="text-lg font-bold text-gray-900"> About</h3>
+                  <h3 className="text-lg font-bold text-gray-900">About</h3>
                 </div>
                 <p className="text-gray-700 leading-relaxed">{club.description}</p>
               </div>

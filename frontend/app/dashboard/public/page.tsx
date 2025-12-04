@@ -25,6 +25,7 @@ export default function PublicDashboard({
 }: PublicDashboardProps) {
   const [clubs, setClubs] = useState<any[]>([]);
   const [events, setEvents] = useState<any[]>([]);
+  const [myMemberships, setMyMemberships] = useState<any[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("All Clubs");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [currentEventIndex, setCurrentEventIndex] = useState(0);
@@ -32,16 +33,57 @@ export default function PublicDashboard({
   const router = useRouter();
 
   useEffect(() => {
-    async function loadClubs() {
+    async function loadData() {
       try {
         const clubsData = await api.getClubs();
         setClubs(clubsData);
+
+        // Fetch user's memberships and events if logged in
+        if (user) {
+          try {
+            const memberships = await api.getMyMemberships();
+            setMyMemberships(Array.isArray(memberships) ? memberships : []);
+
+            // Fetch all events
+            const eventsData = await api.getEvents();
+            if (eventsData?.events) {
+              setEvents(eventsData.events);
+            }
+          } catch (e) {
+            console.error("Failed to load user data", e);
+          }
+        }
       } catch (e) {
         console.error("Failed to load clubs", e);
       }
     }
-    loadClubs();
-  }, []);
+    loadData();
+  }, [user]);
+
+  // Helper to check if user has joined a club
+  const isJoined = (clubId: string) => {
+    return myMemberships.some((m) => m.club_id === clubId);
+  };
+
+  // Format event date/time
+  function formatEventTime(timestamp: any): string {
+    if (!timestamp) return "";
+    try {
+      const date = typeof timestamp === "number"
+        ? new Date(timestamp * 1000)
+        : new Date(timestamp);
+      return date.toLocaleString("en-US", {
+        weekday: "short",
+        month: "short",
+        day: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+      });
+    } catch {
+      return "";
+    }
+  }
 
   const featuredEvents = useMemo(() => events.filter((event) => event.featured), [events]);
 
@@ -70,6 +112,18 @@ export default function PublicDashboard({
   });
 
   const currentEvent = featuredEvents[currentEventIndex];
+
+  // Get upcoming events (sorted by start_time)
+  const upcomingEvents = useMemo(() => {
+    return events
+      .filter((e) => e.start_time)
+      .sort((a, b) => {
+        const aTime = typeof a.start_time === "number" ? a.start_time : new Date(a.start_time).getTime() / 1000;
+        const bTime = typeof b.start_time === "number" ? b.start_time : new Date(b.start_time).getTime() / 1000;
+        return aTime - bTime;
+      })
+      .slice(0, 6);
+  }, [events]);
 
   async function handleLogout() {
     await signOut(auth);
@@ -142,7 +196,7 @@ export default function PublicDashboard({
                       </Link>
                       <Link
                         href="/schedule"
-                        className="px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg text-sm font-semibold hover:bg-indigo-200 transition"
+                        className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-semibold hover:bg-gray-200 transition"
                       >
                         Schedule
                       </Link>
@@ -180,36 +234,58 @@ export default function PublicDashboard({
 
         {/* Content */}
         <div className="p-4 sm:p-6 lg:p-8 space-y-8">
-          {/* Featured Event */}
-          {currentEvent && (
-            <section className="relative bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg p-8 text-white overflow-hidden min-h-[320px] flex flex-col justify-end">
-              <div className="absolute inset-0 bg-black/20" />
-              <div className="relative z-10">
-                <span className="text-sm font-semibold bg-white/20 px-3 py-1 rounded-full">
-                  Featured Event
-                </span>
-                <h2 className="text-4xl font-bold mt-4">{currentEvent.title}</h2>
-                <p className="text-lg mt-2 max-w-2xl">{currentEvent.description}</p>
-                <div className="mt-6 flex items-center gap-4">
-                  {featuredEvents.length > 1 && (
-                    <div className="flex gap-2">
-                      {featuredEvents.map((_, idx) => (
-                        <button
-                          key={idx}
-                          onClick={() => setCurrentEventIndex(idx)}
-                          className={`w-2 h-2 rounded-full transition ${idx === currentEventIndex ? "bg-white" : "bg-white/40"
-                            }`}
-                        />
-                      ))}
-                    </div>
-                  )}
-                </div>
+
+          {/* Events Overview for Logged-in Students */}
+          {user && profile?.role === "student" && (
+            <section className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                <h2 className="text-xl font-bold text-gray-900">Upcoming Events</h2>
+                <Link
+                  href="/schedule"
+                  className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                >
+                  View All →
+                </Link>
               </div>
+
+              {upcomingEvents.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-gray-100">
+                  {upcomingEvents.map((event) => (
+                    <div
+                      key={event.id}
+                      className="p-5 hover:bg-gray-50 transition cursor-pointer"
+                      onClick={() => router.push(`/dashboard/student/my-clubs/${event.club_id}`)}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="flex-shrink-0 w-12 h-12 bg-blue-100 text-blue-700 rounded-lg flex flex-col items-center justify-center text-xs font-bold">
+                          <span>{new Date(typeof event.start_time === "number" ? event.start_time * 1000 : event.start_time).toLocaleDateString("en-US", { month: "short" })}</span>
+                          <span className="text-lg">{new Date(typeof event.start_time === "number" ? event.start_time * 1000 : event.start_time).getDate()}</span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold text-gray-900 truncate">{event.name}</h3>
+                          <p className="text-sm text-blue-600">{event.club_name || event.club_abbreviation}</p>
+                          {event.description && (
+                            <p className="text-sm text-gray-600 mt-1 line-clamp-2">{event.description}</p>
+                          )}
+                          <p className="text-xs text-gray-500 mt-1">{formatEventTime(event.start_time)}</p>
+                          {event.location && (
+                            <p className="text-xs text-gray-500 truncate">{event.location}</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-8 text-center text-gray-500">
+                  <p>No upcoming events. Join some clubs to see their events!</p>
+                </div>
+              )}
             </section>
           )}
 
-          {/* Welcome Section */}
-          {!currentEvent && (
+          {/* Welcome Section for Non-Logged-in Users */}
+          {!user && (
             <section className="relative bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg p-8 text-white overflow-hidden min-h-[280px] flex flex-col justify-center">
               <div className="relative z-10">
                 <h2 className="text-4xl font-bold">Welcome to StudentSpace!</h2>
@@ -240,6 +316,8 @@ export default function PublicDashboard({
                     }
                   };
 
+                  const joined = isJoined(club.id);
+
                   return (
                     <div
                       key={club.id}
@@ -247,12 +325,19 @@ export default function PublicDashboard({
                       onClick={handleCardClick}
                     >
                       <div className="mb-4">
-                        <h3 className="text-lg font-bold text-gray-900 mb-2">
-                          {club.name}
-                          {club.abbreviation && <span className="ml-2 text-gray-500 text-sm">({club.abbreviation})</span>}
-                        </h3>
+                        <div className="flex items-start justify-between gap-2">
+                          <h3 className="text-lg font-bold text-gray-900">
+                            {club.name}
+                            {club.abbreviation && <span className="ml-2 text-gray-500 text-sm">({club.abbreviation})</span>}
+                          </h3>
+                          {joined && (
+                            <span className="flex-shrink-0 px-2 py-0.5 bg-green-100 text-green-700 text-xs font-semibold rounded-full">
+                              Joined
+                            </span>
+                          )}
+                        </div>
                         {(club.type || club.category) && (
-                          <span className="text-xs px-2 py-1 rounded-md bg-blue-50 text-blue-700 font-medium">
+                          <span className="text-xs px-2 py-1 rounded-md bg-blue-50 text-blue-700 font-medium inline-block mt-2">
                             {club.type || club.category}
                           </span>
                         )}

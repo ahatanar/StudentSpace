@@ -267,12 +267,19 @@ class ClubService:
     @staticmethod
     def delete_club(club_id: str):
         if not db: raise Exception("Database not connected")
+        
+        # Delete the club document
         db.collection('clubs').document(club_id).delete()
-        # Also delete memberships? For now, keep them or delete them. 
-        # Ideally we should delete memberships too to keep DB clean.
+        
+        # Delete all memberships for this club
         memberships = db.collection('club_memberships').where('club_id', '==', club_id).stream()
         for m in memberships:
             m.reference.delete()
+        
+        # Delete all events for this club
+        events = db.collection('events').where('club_id', '==', club_id).stream()
+        for e in events:
+            e.reference.delete()
 
 
 
