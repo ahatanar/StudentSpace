@@ -92,6 +92,22 @@ def join_club(club_id: str, user: User = Depends(get_current_user)):
     """Join a club as a member"""
     return ClubService.add_membership(club_id, user.uid, ClubRole.MEMBER)
 
+@app.post("/clubs/{club_id}/leave")
+def leave_club(club_id: str, user: User = Depends(get_current_user)):
+    """Leave a club"""
+    success = ClubService.remove_membership(club_id, user.uid)
+    if not success:
+        raise HTTPException(status_code=404, detail="Membership not found")
+    return {"message": "Successfully left the club"}
+
+@app.get("/clubs/{club_id}/members")
+def get_club_members(club_id: str, user: User = Depends(get_current_user)):
+    """Get all members of a club"""
+    club = ClubService.get_club(club_id)
+    if not club:
+        raise HTTPException(status_code=404, detail="Club not found")
+    return ClubService.get_club_members(club_id)
+
 @app.put("/clubs/{club_id}/status", response_model=Club)
 def update_club_status(club_id: str, status: ClubStatus, user: User = Depends(get_current_user)):
     """Update club status (Admin only)"""
