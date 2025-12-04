@@ -167,10 +167,55 @@ class ClubService:
         return ClubService.add_membership(club_id, user_id, ClubRole.EXECUTIVE)
 
     @staticmethod
+    def remove_membership(club_id: str, user_id: str) -> bool:
+        """Remove a user's membership from a club (leave club)"""
+        if not db: raise Exception("Database not connected")
+        
+        # Find existing membership
+        existing = db.collection('club_memberships')\
+            .where('club_id', '==', club_id)\
+            .where('user_id', '==', user_id)\
+            .limit(1).get()
+        
+        existing_list = list(existing)
+        if len(existing_list) > 0:
+            doc_id = existing_list[0].id
+            db.collection('club_memberships').document(doc_id).delete()
+            return True
+        return False
+
+    @staticmethod
     def get_user_memberships(user_id: str) -> List[ClubMembership]:
         if not db: raise Exception("Database not connected")
         docs = db.collection('club_memberships').where('user_id', '==', user_id).stream()
         return [ClubMembership(**doc.to_dict()) for doc in docs]
+
+    @staticmethod
+    def get_club_members(club_id: str) -> List[dict]:
+        """Get all members of a club with their user info"""
+        if not db: raise Exception("Database not connected")
+        
+        # Get all memberships for this club
+        memberships = db.collection('club_memberships').where('club_id', '==', club_id).stream()
+        
+        members = []
+        for m in memberships:
+            membership_data = m.to_dict()
+            user_id = membership_data.get('user_id')
+            
+            # Get user info
+            user_doc = db.collection('users').document(user_id).get()
+            if user_doc.exists:
+                user_data = user_doc.to_dict()
+                members.append({
+                    'user_id': user_id,
+                    'display_name': user_data.get('display_name', 'Unknown'),
+                    'email': user_data.get('email', ''),
+                    'role': membership_data.get('role', 'member'),
+                    'joined_at': membership_data.get('joined_at')
+                })
+        
+        return members
 
     @staticmethod
     def update_club_status(club_id: str, status: ClubStatus) -> Optional[Club]:

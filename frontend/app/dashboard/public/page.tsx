@@ -76,26 +76,6 @@ export default function PublicDashboard({
     router.push("/dashboard/public");
   }
 
-  async function joinClub(clubId: string, clubData: any) {
-    if (!user || profile?.role !== "student") return;
-
-    try {
-      await api.joinClub(clubId);
-
-      // Update local profile state
-      if (profile && profile.joinedClubs) {
-        profile.joinedClubs.push(clubId);
-      }
-
-      alert("Joined club!");
-      // Reload to refresh UI state properly
-      window.location.reload();
-    } catch (e) {
-      console.error("Failed to join club", e);
-      alert("Failed to join club");
-    }
-  }
-
   return (
     <div className="flex min-h-screen bg-gray-50">
       {/* Sidebar */}
@@ -205,12 +185,6 @@ export default function PublicDashboard({
                 <h2 className="text-4xl font-bold mt-4">{currentEvent.title}</h2>
                 <p className="text-lg mt-2 max-w-2xl">{currentEvent.description}</p>
                 <div className="mt-6 flex items-center gap-4">
-                  <Link
-                    href="/login"
-                    className="bg-white text-blue-600 font-bold px-6 py-3 rounded-lg hover:bg-gray-100 transition"
-                  >
-                    Log In to Learn More
-                  </Link>
                   {featuredEvents.length > 1 && (
                     <div className="flex gap-2">
                       {featuredEvents.map((_, idx) => (
@@ -234,10 +208,8 @@ export default function PublicDashboard({
               <div className="relative z-10">
                 <h2 className="text-4xl font-bold">Welcome to StudentSpace!</h2>
                 <p className="text-lg mt-2 max-w-2xl">
-                  Discover clubs, join events, and get involved on campus.
+                  Log in to discover clubs, join events, and get involved on campus.
                 </p>
-                <div className="mt-6">
-                </div>
               </div>
             </section>
           )}
@@ -256,14 +228,17 @@ export default function PublicDashboard({
             {filteredClubs.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
                 {filteredClubs.map((club) => {
-                  const isJoined =
-                    profile?.role === "student" &&
-                    profile.joinedClubs?.includes(club.id);
+                  const handleCardClick = () => {
+                    if (profile?.role === "student") {
+                      router.push(`/dashboard/student/my-clubs/${club.id}`);
+                    }
+                  };
 
                   return (
                     <div
                       key={club.id}
-                      className="bg-white rounded-lg p-5 flex flex-col border border-gray-200 hover:shadow-lg transition-shadow"
+                      className={`bg-white rounded-lg p-5 flex flex-col border border-gray-200 hover:shadow-lg transition-shadow ${profile?.role === "student" ? "cursor-pointer" : ""}`}
+                      onClick={handleCardClick}
                     >
                       <div className="mb-4">
                         <h3 className="text-lg font-bold text-gray-900 mb-2">
@@ -276,27 +251,7 @@ export default function PublicDashboard({
                           </span>
                         )}
                       </div>
-                      <p className="text-sm text-gray-600 flex-grow mb-5">{club.description}</p>
-
-                      {profile?.role === "student" ? (
-                        <button
-                          onClick={() => joinClub(club.id, club)}
-                          className={`w-full font-semibold py-2.5 rounded-lg transition text-center ${isJoined
-                            ? "bg-gray-400 text-white cursor-not-allowed"
-                            : "bg-blue-600 text-white hover:bg-blue-700"
-                            }`}
-                          disabled={isJoined}
-                        >
-                          {isJoined ? "Joined" : "Join Club"}
-                        </button>
-                      ) : (
-                        <Link
-                          href="/login"
-                          className="w-full bg-blue-600 text-white font-semibold py-2.5 rounded-lg hover:bg-blue-700 transition text-center block"
-                        >
-                          Log In to Join
-                        </Link>
-                      )}
+                      <p className="text-sm text-gray-600 flex-grow line-clamp-3">{club.description}</p>
                     </div>
                   );
                 })}

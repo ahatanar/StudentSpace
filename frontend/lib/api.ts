@@ -68,6 +68,25 @@ export const api = {
     return res.json();
   },
 
+  async leaveClub(clubId: string) {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${API_BASE_URL}/clubs/${clubId}/leave`, {
+      method: "POST",
+      headers,
+    });
+    if (!res.ok) throw new Error("Failed to leave club");
+    return res.json();
+  },
+
+  async getClubMembers(clubId: string) {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${API_BASE_URL}/clubs/${clubId}/members`, {
+      headers,
+    });
+    if (!res.ok) throw new Error("Failed to fetch club members");
+    return res.json();
+  },
+
   async getMyProfile() {
     const headers = await getAuthHeaders();
     const res = await fetch(`${API_BASE_URL}/users/me`, { headers });
