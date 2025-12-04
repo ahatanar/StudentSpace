@@ -67,6 +67,11 @@ class User(BaseModel):
     email: EmailStr
     display_name: str
     is_admin: bool = False  # True for system admins only
+    
+    # Google Calendar integration
+    calendar_connected: bool = False
+    google_refresh_token: Optional[str] = None  # Encrypted refresh token
+    
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 

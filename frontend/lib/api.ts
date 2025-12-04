@@ -167,6 +167,83 @@ export const api = {
     return res.json();
   },
 
+  // Calendar Integration
+  async getCalendarStatus() {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${API_BASE_URL}/api/calendar/status`, { headers });
+    if (!res.ok) throw new Error("Failed to get calendar status");
+    return res.json();
+  },
+
+  async disconnectCalendar() {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${API_BASE_URL}/api/calendar/disconnect`, {
+      method: "POST",
+      headers,
+    });
+    if (!res.ok) throw new Error("Failed to disconnect calendar");
+    return res.json();
+  },
+
+  // Event CRUD
+  async createEvent(event: {
+    club_id: string;
+    name: string;
+    start_time: string;
+    end_time?: string;
+    description?: string;
+    location?: string;
+  }) {
+    const headers = await getAuthHeaders();
+    const params = new URLSearchParams();
+    params.append("club_id", event.club_id);
+    params.append("name", event.name);
+    params.append("start_time", event.start_time);
+    if (event.end_time) params.append("end_time", event.end_time);
+    if (event.description) params.append("description", event.description);
+    if (event.location) params.append("location", event.location);
+
+    const res = await fetch(`${API_BASE_URL}/events?${params.toString()}`, {
+      method: "POST",
+      headers,
+    });
+    if (!res.ok) throw new Error("Failed to create event");
+    return res.json();
+  },
+
+  async updateEvent(eventId: string, updates: {
+    name?: string;
+    start_time?: string;
+    end_time?: string;
+    description?: string;
+    location?: string;
+  }) {
+    const headers = await getAuthHeaders();
+    const params = new URLSearchParams();
+    if (updates.name) params.append("name", updates.name);
+    if (updates.start_time) params.append("start_time", updates.start_time);
+    if (updates.end_time) params.append("end_time", updates.end_time);
+    if (updates.description !== undefined) params.append("description", updates.description);
+    if (updates.location !== undefined) params.append("location", updates.location);
+
+    const res = await fetch(`${API_BASE_URL}/events/${eventId}?${params.toString()}`, {
+      method: "PUT",
+      headers,
+    });
+    if (!res.ok) throw new Error("Failed to update event");
+    return res.json();
+  },
+
+  async deleteEvent(eventId: string) {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${API_BASE_URL}/events/${eventId}`, {
+      method: "DELETE",
+      headers,
+    });
+    if (!res.ok) throw new Error("Failed to delete event");
+    return res.json();
+  },
+
   async getClubTypes() {
     const headers = await getAuthHeaders();
     const res = await fetch(`${API_BASE_URL}/club-types`, { headers });
@@ -197,17 +274,6 @@ export const api = {
     return res.json();
   },
 
-  // --- CREATE EVENT ---
-  async createEvent(eventData: any) {
-    const docRef = await addDoc(collection(db, "events"), {
-      ...eventData,
-      created_by: auth.currentUser?.uid ?? null,
-      created_at: new Date(),
-      updated_at: new Date(),
-    });
-    return { id: docRef.id };
-  },
-
   // --- READ EVENTS BY CLUB ---
   async getEventsByClub(clubId: string) {
     const q = query(collection(db, "events"), where("club_id", "==", clubId));
@@ -226,21 +292,5 @@ export const api = {
 
     const data = snap.data() as Omit<FirestoreEvent, "id">;
     return { id: snap.id, ...data };
-  },
-
-
-  // --- UPDATE EVENT ---
-  async updateEvent(eventId: string, updates: any) {
-    const docRef = doc(db, "events", eventId);
-    await updateDoc(docRef, {
-      ...updates,
-      updated_at: new Date(),
-    });
-  },
-
-  // --- DELETE EVENT ---
-  async deleteEvent(eventId: string) {
-    const docRef = doc(db, "events", eventId);
-    await deleteDoc(docRef);
   },
 };
