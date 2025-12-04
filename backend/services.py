@@ -101,6 +101,18 @@ class ClubService:
         return None
 
     @staticmethod
+    def update_club(club_id: str, updates: dict) -> bool:
+        """Update club details"""
+        if not db: raise Exception("Database not connected")
+        try:
+            updates["updated_at"] = datetime.now()
+            db.collection('clubs').document(club_id).update(updates)
+            return True
+        except Exception as e:
+            print(f"Error updating club: {e}")
+            return False
+
+    @staticmethod
     def list_clubs(status: Optional[ClubStatus] = ClubStatus.ACTIVE) -> List[Club]:
         if not db: raise Exception("Database not connected")
         
@@ -189,6 +201,26 @@ class ClubService:
         if not db: raise Exception("Database not connected")
         docs = db.collection('club_memberships').where('user_id', '==', user_id).stream()
         return [ClubMembership(**doc.to_dict()) for doc in docs]
+
+    @staticmethod
+    def update_member_role(club_id: str, user_id: str, new_role: ClubRole) -> bool:
+        """Update a member's role in a club"""
+        if not db: raise Exception("Database not connected")
+        
+        # Find existing membership
+        existing = db.collection('club_memberships')\
+            .where('club_id', '==', club_id)\
+            .where('user_id', '==', user_id)\
+            .limit(1).get()
+        
+        existing_list = list(existing)
+        if len(existing_list) > 0:
+            doc_id = existing_list[0].id
+            db.collection('club_memberships').document(doc_id).update({
+                'role': new_role.value
+            })
+            return True
+        return False
 
     @staticmethod
     def get_club_members(club_id: str) -> List[dict]:

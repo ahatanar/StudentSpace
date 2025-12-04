@@ -176,6 +176,15 @@ export default function ClubPage() {
                   </Link>
                 )}
 
+                {userRole === "president" && (
+                  <Link
+                    href={`/dashboard/student/my-clubs/${clubId}/settings`}
+                    className="px-5 py-2.5 bg-gray-800 text-white rounded-lg text-sm font-semibold hover:bg-gray-900 transition"
+                  >
+                    Settings
+                  </Link>
+                )}
+
                 {isMember && userRole !== "president" && (
                   <button
                     onClick={handleLeaveClub}
@@ -206,7 +215,7 @@ export default function ClubPage() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
-                  <h3 className="text-lg font-bold text-gray-900">About This Club</h3>
+                  <h3 className="text-lg font-bold text-gray-900"> About</h3>
                 </div>
                 <p className="text-gray-700 leading-relaxed">{club.description}</p>
               </div>

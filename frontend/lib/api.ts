@@ -87,6 +87,42 @@ export const api = {
     return res.json();
   },
 
+  async updateMemberRole(clubId: string, userId: string, role: string) {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${API_BASE_URL}/clubs/${clubId}/members/${userId}/role?role=${role}`, {
+      method: "PUT",
+      headers,
+    });
+    if (!res.ok) throw new Error("Failed to update member role");
+    return res.json();
+  },
+
+  async deleteClubAsPresident(clubId: string) {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${API_BASE_URL}/clubs/${clubId}/president`, {
+      method: "DELETE",
+      headers,
+    });
+    if (!res.ok) throw new Error("Failed to delete club");
+    return res.json();
+  },
+
+  async updateClub(clubId: string, updates: { name?: string; abbreviation?: string; type?: string; description?: string }) {
+    const headers = await getAuthHeaders();
+    const params = new URLSearchParams();
+    if (updates.name) params.append("name", updates.name);
+    if (updates.abbreviation !== undefined) params.append("abbreviation", updates.abbreviation);
+    if (updates.type) params.append("club_type", updates.type);
+    if (updates.description !== undefined) params.append("description", updates.description);
+
+    const res = await fetch(`${API_BASE_URL}/clubs/${clubId}?${params.toString()}`, {
+      method: "PUT",
+      headers,
+    });
+    if (!res.ok) throw new Error("Failed to update club");
+    return res.json();
+  },
+
   async getMyProfile() {
     const headers = await getAuthHeaders();
     const res = await fetch(`${API_BASE_URL}/users/me`, { headers });
