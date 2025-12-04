@@ -132,6 +132,18 @@ def get_my_profile(user: User = Depends(get_current_user)):
 def get_my_memberships(user: User = Depends(get_current_user)):
     return ClubService.get_user_memberships(user.uid)
 
+@app.get("/users/me/is-executive")
+def check_is_executive(user: User = Depends(get_current_user)):
+    """Check if current user is an executive or president in any club.
+    
+    This determines access to premium features like the campus heatmap.
+    """
+    from services import db
+    from models import is_executive_anywhere
+    
+    is_exec = is_executive_anywhere(user.uid, db)
+    return {"is_executive": is_exec}
+
 @app.get("/users/search", response_model=User)
 def search_user(email: str, user: User = Depends(get_current_user)):
     """Search for a user by email (Authenticated users only)"""

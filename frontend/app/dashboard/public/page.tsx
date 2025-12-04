@@ -160,6 +160,12 @@ export default function PublicDashboard({
                       >
                         My Clubs
                       </Link>
+                      <Link
+                        href="/schedule"
+                        className="px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg text-sm font-semibold hover:bg-indigo-200 transition"
+                      >
+                        Schedule
+                      </Link>
                       {!hideHeaderMyAccount && (
                         <Link href="/account" className="underline text-sm">
                           My Account

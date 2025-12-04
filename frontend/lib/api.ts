@@ -89,6 +89,16 @@ export const api = {
     return memberships.find((m: any) => m.club_id === clubId) || null;
   },
 
+  async checkIsExecutive(): Promise<{ is_executive: boolean }> {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${API_BASE_URL}/users/me/is-executive`, { headers });
+    if (!res.ok) {
+      // If not authenticated or error, return false
+      return { is_executive: false };
+    }
+    return res.json();
+  },
+
   async getClubTypes() {
     const headers = await getAuthHeaders();
     const res = await fetch(`${API_BASE_URL}/club-types`, { headers });
