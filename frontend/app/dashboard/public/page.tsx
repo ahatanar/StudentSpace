@@ -27,6 +27,7 @@ export default function PublicDashboard({
   const [events, setEvents] = useState<any[]>([]);
   const [myMemberships, setMyMemberships] = useState<any[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("All Clubs");
+  const [selectedEventFilter, setSelectedEventFilter] = useState<string>("All Events");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [currentEventIndex, setCurrentEventIndex] = useState(0);
   const { user, profile } = useAuth();
@@ -102,6 +103,17 @@ export default function PublicDashboard({
     return ["All Clubs", ...typesList];
   }, [clubs]);
 
+  // Get unique club names from events for filter
+  const eventClubFilters = useMemo(() => {
+    const clubNames = new Set<string>();
+    events.forEach((e) => {
+      if (e.club_name || e.club_abbreviation) {
+        clubNames.add(e.club_name || e.club_abbreviation);
+      }
+    });
+    return ["All Events", ...Array.from(clubNames).sort()];
+  }, [events]);
+
   const filteredClubs = clubs.filter((club) => {
     const clubType = club.type || club.category;
     const matchesCategory = selectedCategory === "All Clubs" || clubType === selectedCategory;
@@ -113,17 +125,18 @@ export default function PublicDashboard({
 
   const currentEvent = featuredEvents[currentEventIndex];
 
-  // Get upcoming events (sorted by start_time)
+  // Get upcoming events (sorted by start_time, filtered by club)
   const upcomingEvents = useMemo(() => {
     return events
       .filter((e) => e.start_time)
+      .filter((e) => selectedEventFilter === "All Events" || (e.club_name || e.club_abbreviation) === selectedEventFilter)
       .sort((a, b) => {
         const aTime = typeof a.start_time === "number" ? a.start_time : new Date(a.start_time).getTime() / 1000;
         const bTime = typeof b.start_time === "number" ? b.start_time : new Date(b.start_time).getTime() / 1000;
         return aTime - bTime;
       })
       .slice(0, 6);
-  }, [events]);
+  }, [events, selectedEventFilter]);
 
   async function handleLogout() {
     await signOut(auth);
@@ -139,6 +152,28 @@ export default function PublicDashboard({
             <span className="text-2xl font-bold text-gray-900">StudentSpace</span>
           </div>
 
+          {/* Event Filter */}
+          {user && profile?.role === "student" && eventClubFilters.length > 1 && (
+            <nav className="flex flex-col space-y-1 mb-8">
+              <h3 className="px-3 text-xs font-semibold uppercase text-gray-500 tracking-wider mb-2">
+                Filter Events
+              </h3>
+              {eventClubFilters.map((filter) => (
+                <button
+                  key={filter}
+                  onClick={() => setSelectedEventFilter(filter)}
+                  className={`px-3 py-2.5 text-sm font-medium rounded-lg transition text-left ${selectedEventFilter === filter
+                    ? "text-white bg-blue-600"
+                    : "text-gray-600 hover:bg-gray-100"
+                    }`}
+                >
+                  {filter}
+                </button>
+              ))}
+            </nav>
+          )}
+
+          {/* Club Filter */}
           <nav className="flex flex-col space-y-1">
             <h3 className="px-3 text-xs font-semibold uppercase text-gray-500 tracking-wider mb-2">
               Filter Clubs
@@ -156,9 +191,9 @@ export default function PublicDashboard({
               </button>
             ))}
           </nav>
-
         </aside>
       )}
+
 
       {/* Main Content */}
       <main className="flex-1">
@@ -239,7 +274,9 @@ export default function PublicDashboard({
           {user && profile?.role === "student" && (
             <section className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
               <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-                <h2 className="text-xl font-bold text-gray-900">Upcoming Events</h2>
+                <h2 className="text-xl font-bold text-gray-900">
+                  {selectedEventFilter === "All Events" ? "Upcoming Events" : `${selectedEventFilter} Events`}
+                </h2>
                 <Link
                   href="/schedule"
                   className="text-sm text-blue-600 hover:text-blue-700 font-medium"
@@ -278,7 +315,7 @@ export default function PublicDashboard({
                 </div>
               ) : (
                 <div className="p-8 text-center text-gray-500">
-                  <p>No upcoming events. Join some clubs to see their events!</p>
+                  <p>{selectedEventFilter === "All Events" ? "No upcoming events. Join some clubs to see their events!" : `No events from ${selectedEventFilter}.`}</p>
                 </div>
               )}
             </section>

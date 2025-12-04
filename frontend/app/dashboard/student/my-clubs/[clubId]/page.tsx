@@ -253,7 +253,15 @@ export default function ClubPage() {
               )}
 
               <div className={`space-y-4 ${events.length > 3 ? "max-h-[600px] overflow-y-auto pr-2" : ""}`}>
-                {events.map((ev) => (
+                {[...events].sort((a, b) => {
+                  const getTime = (t: any) => {
+                    if (!t) return 0;
+                    if (typeof t === "number") return t;
+                    if (t.toDate) return t.toDate().getTime() / 1000;
+                    return new Date(t).getTime() / 1000;
+                  };
+                  return getTime(a.start_time) - getTime(b.start_time);
+                }).map((ev) => (
                   <div
                     key={ev.id}
                     className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden hover:shadow-md transition"
