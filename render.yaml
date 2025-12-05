@@ -1,0 +1,42 @@
+# Render Blueprint - Infrastructure as Code
+# https://render.com/docs/blueprint-spec
+
+services:
+  # ============================================
+  # Backend API Service
+  # ============================================
+  - type: web
+    name: studentspace-backend
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    region: oregon
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11"
+      # Add your environment variables here
+      # - key: GOOGLE_CALENDAR_CLIENT_ID
+      #   sync: false  # Set in Render dashboard for secrets
+      # - key: GOOGLE_CALENDAR_CLIENT_SECRET
+      #   sync: false
+
+  # ============================================
+  # Frontend Web Service
+  # ============================================
+  - type: web
+    name: studentspace-frontend
+    runtime: docker
+    dockerfilePath: ./frontend/Dockerfile
+    dockerContext: ./frontend
+    region: oregon
+    plan: free
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NEXT_PUBLIC_API_URL
+        fromService:
+          name: studentspace-backend
+          type: web
+          property: host

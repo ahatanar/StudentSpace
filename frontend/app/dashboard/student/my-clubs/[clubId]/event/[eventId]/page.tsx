@@ -59,8 +59,8 @@ export default function EditEventPage() {
       name: event.name,
       description: event.description,
       location: event.location,
-      start_time: new Date(event.start_time),
-      end_time: event.end_time ? new Date(event.end_time) : null,
+      start_time: new Date(event.start_time).toISOString(),
+      end_time: event.end_time ? new Date(event.end_time).toISOString() : undefined,
     });
 
     router.push(`/dashboard/student/my-clubs/${clubId}`);

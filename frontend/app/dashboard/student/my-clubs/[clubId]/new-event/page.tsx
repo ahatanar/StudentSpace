@@ -58,8 +58,8 @@ export default function NewEventPage() {
         name,
         description,
         location,
-        start_time: new Date(startTime),
-        end_time: endTime ? new Date(endTime) : null,
+        start_time: new Date(startTime).toISOString(),
+        end_time: endTime ? new Date(endTime).toISOString() : undefined,
       });
       router.push(`/dashboard/student/my-clubs/${clubId}`);
     } catch (err) {
