@@ -131,8 +131,9 @@ def test_join_club(mock_auth, mock_firestore):
 def test_create_event_success(mock_auth, mock_firestore):
     """Test creating an event as an executive (mocked)"""
     
-    # Mock permission check to return True
-    with patch("models.can_create_events", return_value=True):
+    # Mock permission check to return True AND patch api.db
+    with patch("models.can_create_events", return_value=True), \
+         patch("api.db", mock_firestore):
         params = {
             "club_id": MOCK_CLUB_ID,
             "name": "New Event",
