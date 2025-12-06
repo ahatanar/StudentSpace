@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
 import { api } from "../../../../../../lib/api";
+import ImageUploadSection from "../../../../../../components/ImageUploadSection";
 
 type Member = {
     user_id: string;
@@ -18,6 +19,8 @@ type Club = {
     abbreviation?: string;
     type?: string;
     description?: string;
+    icon_url?: string | null;
+    banner_url?: string | null;
 };
 
 const CLUB_TYPES = ["Cultural", "Religious", "Sports", "Technology", "Academic", "Arts", "Social", "Other"];
@@ -222,6 +225,50 @@ export default function ClubSettingsPage() {
                                     {savingDetails ? "Saving..." : "Save Changes"}
                                 </button>
                             </div>
+                        </div>
+                    </section>
+
+                    {/* Club Images Section */}
+                    <section>
+                        <h2 className="text-2xl font-bold text-gray-900 mb-4">Club Images</h2>
+                        <p className="text-gray-600 mb-6">
+                            Upload a custom icon and banner for your club to make it stand out.
+                        </p>
+
+                        <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-6 space-y-8">
+                            {/* Club Icon */}
+                            <ImageUploadSection
+                                title="Club Icon"
+                                description="Square logo or icon for your club (recommended: 512×512px)"
+                                currentImageUrl={club?.icon_url}
+                                imageType="icon"
+                                onUpload={async (file) => {
+                                    const result = await api.uploadClubIcon(clubId as string, file);
+                                    setClub((prev) => prev ? { ...prev, icon_url: result.icon_url } : null);
+                                }}
+                                onDelete={async () => {
+                                    await api.deleteClubIcon(clubId as string);
+                                    setClub((prev) => prev ? { ...prev, icon_url: null } : null);
+                                }}
+                            />
+
+                            <div className="border-t border-gray-200" />
+
+                            {/* Club Banner */}
+                            <ImageUploadSection
+                                title="Club Banner"
+                                description="Wide banner image for your club page (recommended: 1200×400px)"
+                                currentImageUrl={club?.banner_url}
+                                imageType="banner"
+                                onUpload={async (file) => {
+                                    const result = await api.uploadClubBanner(clubId as string, file);
+                                    setClub((prev) => prev ? { ...prev, banner_url: result.banner_url } : null);
+                                }}
+                                onDelete={async () => {
+                                    await api.deleteClubBanner(clubId as string);
+                                    setClub((prev) => prev ? { ...prev, banner_url: null } : null);
+                                }}
+                            />
                         </div>
                     </section>
 

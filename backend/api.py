@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Now import everything else
-from fastapi import FastAPI, HTTPException, Depends, Header
+from fastapi import FastAPI, HTTPException, Depends, Header, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from typing import List, Optional
@@ -173,6 +173,112 @@ def delete_club(club_id: str, user: User = Depends(get_current_user)):
     return {"message": "Club deleted successfully", "club_id": club_id}
 
 
+# ============================================================================
+# CLUB IMAGE UPLOAD ENDPOINTS
+# ============================================================================
+
+@app.post("/clubs/{club_id}/upload-icon")
+async def upload_club_icon(club_id: str, file: UploadFile, user: User = Depends(get_current_user)):
+    """Upload club icon image (President/Admin only)"""
+    from storage_service import StorageService
+    
+    # Check if club exists
+    club = ClubService.get_club(club_id)
+    if not club:
+        raise HTTPException(status_code=404, detail="Club not found")
+    
+    # Check permissions (president or admin)
+    memberships = ClubService.get_user_memberships(user.uid)
+    is_president = any(m.club_id == club_id and m.role == ClubRole.PRESIDENT for m in memberships)
+    
+    if not is_president and not user.is_admin:
+        raise HTTPException(status_code=403, detail="Only the Club President can upload images")
+    
+    # Upload image
+    icon_url = StorageService.upload_club_image(club_id, file, "icon")
+    
+    # Update club document
+    ClubService.update_club(club_id, {"icon_url": icon_url})
+    
+    return {"message": "Icon uploaded successfully", "icon_url": icon_url}
+
+
+@app.post("/clubs/{club_id}/upload-banner")
+async def upload_club_banner(club_id: str, file: UploadFile, user: User = Depends(get_current_user)):
+    """Upload club banner image (President/Admin only)"""
+    from storage_service import StorageService
+    
+    # Check if club exists
+    club = ClubService.get_club(club_id)
+    if not club:
+        raise HTTPException(status_code=404, detail="Club not found")
+    
+    # Check permissions (president or admin)
+    memberships = ClubService.get_user_memberships(user.uid)
+    is_president = any(m.club_id == club_id and m.role == ClubRole.PRESIDENT for m in memberships)
+    
+    if not is_president and not user.is_admin:
+        raise HTTPException(status_code=403, detail="Only the Club President can upload images")
+    
+    # Upload image
+    banner_url = StorageService.upload_club_image(club_id, file, "banner")
+    
+    # Update club document
+    ClubService.update_club(club_id, {"banner_url": banner_url})
+    
+    return {"message": "Banner uploaded successfully", "banner_url": banner_url}
+
+
+@app.delete("/clubs/{club_id}/icon")
+def delete_club_icon(club_id: str, user: User = Depends(get_current_user)):
+    """Delete club icon (President/Admin only)"""
+    from storage_service import StorageService
+    
+    # Check if club exists
+    club = ClubService.get_club(club_id)
+    if not club:
+        raise HTTPException(status_code=404, detail="Club not found")
+    
+    # Check permissions
+    memberships = ClubService.get_user_memberships(user.uid)
+    is_president = any(m.club_id == club_id and m.role == ClubRole.PRESIDENT for m in memberships)
+    
+    if not is_president and not user.is_admin:
+        raise HTTPException(status_code=403, detail="Only the Club President can delete images")
+    
+    # Delete from storage
+    StorageService.delete_club_image(club_id, "icon")
+    
+    # Update club document
+    ClubService.update_club(club_id, {"icon_url": None})
+    
+    return {"message": "Icon deleted successfully"}
+
+
+@app.delete("/clubs/{club_id}/banner")
+def delete_club_banner(club_id: str, user: User = Depends(get_current_user)):
+    """Delete club banner (President/Admin only)"""
+    from storage_service import StorageService
+    
+    # Check if club exists
+    club = ClubService.get_club(club_id)
+    if not club:
+        raise HTTPException(status_code=404, detail="Club not found")
+    
+    # Check permissions
+    memberships = ClubService.get_user_memberships(user.uid)
+    is_president = any(m.club_id == club_id and m.role == ClubRole.PRESIDENT for m in memberships)
+    
+    if not is_president and not user.is_admin:
+        raise HTTPException(status_code=403, detail="Only the Club President can delete images")
+    
+    # Delete from storage
+    StorageService.delete_club_image(club_id, "banner")
+    
+    # Update club document
+    ClubService.update_club(club_id, {"banner_url": None})
+    
+    return {"message": "Banner deleted successfully"}
 
 
 

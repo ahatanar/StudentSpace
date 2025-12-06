@@ -89,6 +89,11 @@ class Club(BaseModel):
     created_by: Optional[str] = None  # User UID
     president_id: Optional[str] = None  # User UID (current president)
     status: ClubStatus = ClubStatus.PENDING
+    
+    # Club images
+    icon_url: Optional[str] = None  # URL to club icon/logo in Firebase Storage
+    banner_url: Optional[str] = None  # URL to club banner image in Firebase Storage
+    
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 

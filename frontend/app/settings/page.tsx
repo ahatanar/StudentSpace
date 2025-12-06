@@ -83,6 +83,20 @@ export default function SettingsPage() {
             <div className="max-w-4xl mx-auto">
                 {/* Header */}
                 <div className="mb-8">
+                    <button
+                        onClick={() => router.back()}
+                        className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition mb-4 group"
+                    >
+                        <svg
+                            className="w-5 h-5 group-hover:-translate-x-1 transition-transform"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                        </svg>
+                        <span className="font-medium">Back</span>
+                    </button>
                     <h1 className="text-4xl font-bold text-gray-900 mb-2">Settings</h1>
                     <p className="text-gray-600">Manage your account and integrations</p>
                 </div>
@@ -153,8 +167,8 @@ export default function SettingsPage() {
                                 onClick={handleConnectCalendar}
                                 disabled={calendarStatus.loading || !calendarStatus.authUrl}
                                 className={`px-6 py-3 rounded-lg transition font-medium shadow-lg hover:shadow-xl flex items-center gap-2 ${calendarStatus.loading || !calendarStatus.authUrl
-                                        ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
-                                        : 'bg-blue-600 text-white hover:bg-blue-700'
+                                    ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                                    : 'bg-blue-600 text-white hover:bg-blue-700'
                                     }`}
                             >
                                 {calendarStatus.loading ? (

@@ -293,4 +293,69 @@ export const api = {
     const data = snap.data() as Omit<FirestoreEvent, "id">;
     return { id: snap.id, ...data };
   },
+
+  // --- CLUB IMAGE UPLOAD ---
+  async uploadClubIcon(clubId: string, file: File): Promise<{ icon_url: string }> {
+    const user = auth.currentUser;
+    if (!user) throw new Error("Not authenticated");
+    const token = await user.getIdToken();
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const res = await fetch(`${API_BASE_URL}/clubs/${clubId}/upload-icon`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+    });
+
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({ detail: "Failed to upload icon" }));
+      throw new Error(error.detail || "Failed to upload icon");
+    }
+    return res.json();
+  },
+
+  async uploadClubBanner(clubId: string, file: File): Promise<{ banner_url: string }> {
+    const user = auth.currentUser;
+    if (!user) throw new Error("Not authenticated");
+    const token = await user.getIdToken();
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const res = await fetch(`${API_BASE_URL}/clubs/${clubId}/upload-banner`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+    });
+
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({ detail: "Failed to upload banner" }));
+      throw new Error(error.detail || "Failed to upload banner");
+    }
+    return res.json();
+  },
+
+  async deleteClubIcon(clubId: string): Promise<void> {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${API_BASE_URL}/clubs/${clubId}/icon`, {
+      method: "DELETE",
+      headers,
+    });
+    if (!res.ok) throw new Error("Failed to delete icon");
+  },
+
+  async deleteClubBanner(clubId: string): Promise<void> {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${API_BASE_URL}/clubs/${clubId}/banner`, {
+      method: "DELETE",
+      headers,
+    });
+    if (!res.ok) throw new Error("Failed to delete banner");
+  },
 };
