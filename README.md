@@ -247,4 +247,21 @@ pytest selenium_tests/test_suite.py -v
 
 Performance testing with (https://pagespeed.web.dev/).
 
-**Report**: (https://pagespeed.web.dev/analysis/https-studentspace-frontend-onrender-com)
+### Desktop Scores (Dec 6, 2025)
+
+| Category | Score |
+|----------|-------|
+| Performance | 99 |
+| Accessibility | 100 |
+| Best Practices | 100 |
+| SEO | 100 |
+
+### Core Web Vitals
+
+| Metric | Value |
+|--------|-------|
+| First Contentful Paint (FCP) | 0.2s |
+| Largest Contentful Paint (LCP) | 0.5s |
+| Total Blocking Time (TBT) | 50ms |
+| Cumulative Layout Shift (CLS) | 0 |
+| Speed Index | 1.2s |
