@@ -53,7 +53,8 @@ export default function HeatmapDisplay() {
 
     useEffect(() => {
         setLoading(true);
-        const url = `http://localhost:8000/heatmap?interval=${interval}&term=${selectedTerm}`;
+        const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+        const url = `${API_BASE_URL}/heatmap?interval=${interval}&term=${selectedTerm}`;
         console.log('🔍 Fetching heatmap data from:', url);
 
         fetch(url)
