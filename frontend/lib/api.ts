@@ -1,7 +1,7 @@
 import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, query, updateDoc, where } from "firebase/firestore";
 import { auth, db } from "./firebase";
 
-const API_BASE_URL = "http://localhost:8000";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 import { Timestamp } from "firebase/firestore";
 
 
@@ -11,8 +11,8 @@ export interface FirestoreEvent {
   name: string;
   description: string;
   location: string;
-  start_time: Timestamp;       // Firestore timestamp
-  end_time: Timestamp | null;  // or Timestamp if you always set it
+  start_time: Timestamp;
+  end_time: Timestamp | null;
   created_at?: Timestamp;
   updated_at?: Timestamp;
   created_by?: string | null;
