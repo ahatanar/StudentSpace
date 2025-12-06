@@ -96,6 +96,62 @@ StudentSpace follows a **layered monolithic architecture** with clear separation
 
 ---
 
+## API Documentation
+
+### Authentication
+All protected endpoints require a Firebase JWT token in the Authorization header
+
+### Clubs
+
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | `/clubs` | List all clubs (filter by status, search) | No |
+| GET | `/clubs/{club_id}` | Get club details | No |
+| POST | `/clubs` | Create a new club | Yes |
+| PUT | `/clubs/{club_id}` | Update club details | President |
+| DELETE | `/clubs/{club_id}` | Delete club | Admin |
+| PUT | `/clubs/{club_id}/status` | Update club status | Admin |
+| POST | `/clubs/{club_id}/join` | Join a club | Yes |
+| POST | `/clubs/{club_id}/leave` | Leave a club | Yes |
+| GET | `/clubs/{club_id}/members` | Get club members | Yes |
+| PUT | `/clubs/{club_id}/members/{user_id}/role` | Update member role | President |
+| DELETE | `/clubs/{club_id}/president` | Delete club as president | President |
+| GET | `/club-types` | List available club types | No |
+
+### Users
+
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | `/users/me` | Get current user profile | Yes |
+| GET | `/users/me/memberships` | Get user's club memberships | Yes |
+| GET | `/users/me/is-executive` | Check if user is executive | Yes |
+| GET | `/users/search?email=` | Search user by email | Yes |
+
+### Events
+
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | `/events` | List events (filter by date, club) | No |
+| POST | `/events` | Create event | Executive |
+| PUT | `/events/{event_id}` | Update event | Executive |
+| DELETE | `/events/{event_id}` | Delete event | Executive |
+
+### Calendar Integration
+
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | `/api/calendar/status` | Get calendar connection status | Yes |
+| GET | `/api/calendar/oauth-callback` | OAuth callback handler | No |
+| POST | `/api/calendar/disconnect` | Disconnect Google Calendar | Yes |
+
+### Utility
+
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | `/health` | Health check | No |
+| GET | `/heatmap` | Campus schedule heatmap | No |
+
+
 ## Authentication & Security
 
 ### Implementation
@@ -168,3 +224,27 @@ docker-compose up
 # Stop services
 docker-compose down
 ```
+
+---
+
+## Selenium E2E Testing
+
+End-to-end tests using Selenium WebDriver to verify application functionality.
+
+### Setup
+```bash
+pip install selenium pytest
+```
+
+### Run Tests
+```bash
+pytest selenium_tests/test_suite.py -v
+```
+
+---
+
+## Performance Analysis
+
+Performance testing with (https://pagespeed.web.dev/).
+
+**Report**: (https://pagespeed.web.dev/analysis/https-studentspace-frontend-onrender-com)
