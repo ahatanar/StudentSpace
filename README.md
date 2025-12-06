@@ -8,6 +8,12 @@ A full-stack web application for university club management, event coordination,
 - **G. Anthony Gutierrez Ricard** - 100815169
 - **Taha Rana** - 100831067
 
+## Live Deployment
+
+The application is deployed on Render:
+
+- **Frontend**: https://studentspace-frontend.onrender.com
+
 ## Features
 
 ### User Management
