@@ -13,6 +13,10 @@ from googleapiclient.errors import HttpError
 from cryptography.fernet import Fernet
 import base64
 import hashlib
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # Environment variables
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CALENDAR_CLIENT_ID", "")

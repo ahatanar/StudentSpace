@@ -235,6 +235,12 @@ export default function PublicDashboard({
                       >
                         Schedule
                       </Link>
+                      <Link
+                        href="/settings"
+                        className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-semibold hover:bg-gray-200 transition"
+                      >
+                        Settings
+                      </Link>
                       {!hideHeaderMyAccount && (
                         <Link href="/account" className="underline text-sm">
                           My Account

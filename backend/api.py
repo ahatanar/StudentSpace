@@ -1,3 +1,9 @@
+# Load environment variables FIRST before any imports
+import os
+from dotenv import load_dotenv
+load_dotenv()
+
+# Now import everything else
 from fastapi import FastAPI, HTTPException, Depends, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
@@ -7,11 +13,6 @@ from models import User, Club, ClubMembership, ClubRole, ClubStatus, ClubType, E
 from services import UserService, ClubService, db
 from heatmap_builder import build_simple_heatmap
 from calendar_service import CalendarService
-import os
-from dotenv import load_dotenv
-
-# Load environment variables from .env file
-load_dotenv()
 
 app = FastAPI()
 
