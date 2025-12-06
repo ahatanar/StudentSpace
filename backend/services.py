@@ -14,18 +14,30 @@ from datetime import datetime
 from typing import List, Optional
 import os
 
+import json
+
 # Initialize Firebase Admin
-# NOTE: You need to set GOOGLE_APPLICATION_CREDENTIALS env var or place serviceAccountKey.json in root
+# Supports: 
+# 1. FIREBASE_SERVICE_ACCOUNT_JSON env var containing the JSON string
+# 2. GOOGLE_APPLICATION_CREDENTIALS env var pointing to a file
+# 3. serviceAccountKey.json file in root directory
 try:
     if not firebase_admin._apps:
-        # Look for service account key in common locations or env var
+        service_account_json = os.getenv('FIREBASE_SERVICE_ACCOUNT_JSON')
         cred_path = os.getenv('GOOGLE_APPLICATION_CREDENTIALS', 'serviceAccountKey.json')
-        if os.path.exists(cred_path):
+        
+        if service_account_json:
+            # Parse JSON string from environment variable
+            cred_dict = json.loads(service_account_json)
+            cred = credentials.Certificate(cred_dict)
+            firebase_admin.initialize_app(cred)
+            print("Firebase initialized from FIREBASE_SERVICE_ACCOUNT_JSON env var")
+        elif os.path.exists(cred_path):
             cred = credentials.Certificate(cred_path)
             firebase_admin.initialize_app(cred)
+            print(f"Firebase initialized from {cred_path}")
         else:
-            print(f"Warning: {cred_path} not found. Firestore features will fail.")
-            # For development without auth, you might want to mock this or handle gracefully
+            print(f"Warning: No Firebase credentials found. Firestore features will fail.")
             
     db = firestore.client()
 except Exception as e:
