@@ -9,8 +9,9 @@ from unittest.mock import MagicMock, patch
 from datetime import datetime
 
 # Import app and models
-from api import app, get_current_user
-from models import User, Club, Event, ClubRole, ClubStatus
+from app.main import app
+from app.dependencies import get_current_user
+from app.models.schemas import User, Club, Event, ClubRole, ClubStatus
 
 # Create TestClient
 client = TestClient(app)
@@ -52,32 +53,40 @@ def mock_auth():
 
 @pytest.fixture
 def mock_firestore():
-    """Mock the Firestore client in services.py"""
-    with patch("services.db") as mock_db:
-        # Setup mock collections
-        mock_collection = MagicMock()
-        mock_doc_ref = MagicMock()
-        mock_doc_snapshot = MagicMock()
-        
-        # Configure mock chain: db.collection().document().get()
-        mock_db.collection.return_value = mock_collection
-        mock_collection.document.return_value = mock_doc_ref
-        mock_doc_ref.get.return_value = mock_doc_snapshot
-        mock_doc_ref.id = MOCK_CLUB_ID  # IMPORTANT: Return string ID for document reference
-        
-        # Default: Document exists and returns data
-        mock_doc_snapshot.exists = True
-        mock_doc_snapshot.to_dict.return_value = MOCK_CLUB.dict()
-        mock_doc_snapshot.id = MOCK_CLUB_ID
-        
-        # Configure mock chain: db.collection().where().stream()
-        mock_query = MagicMock()
-        mock_collection.where.return_value = mock_query
-        mock_query.where.return_value = mock_query # Chained wheres
-        mock_query.limit.return_value = mock_query # Chained limit
-        mock_query.stream.return_value = [mock_doc_snapshot]
-        mock_query.get.return_value = [mock_doc_snapshot]
-        
+    """Mock the Firestore client in all service modules where it's used"""
+    # Setup mock objects
+    mock_db = MagicMock()
+    mock_collection = MagicMock()
+    mock_doc_ref = MagicMock()
+    mock_doc_snapshot = MagicMock()
+    
+    # Configure mock chain: db.collection().document().get()
+    mock_db.collection.return_value = mock_collection
+    mock_collection.document.return_value = mock_doc_ref
+    mock_doc_ref.get.return_value = mock_doc_snapshot
+    mock_doc_ref.id = MOCK_CLUB_ID  # IMPORTANT: Return string ID for document reference
+    mock_doc_ref.set = MagicMock()  # For create operations
+    mock_doc_ref.update = MagicMock()  # For update operations
+    mock_doc_ref.delete = MagicMock()  # For delete operations
+    
+    # Default: Document exists and returns data
+    mock_doc_snapshot.exists = True
+    mock_doc_snapshot.to_dict.return_value = MOCK_CLUB.model_dump()
+    mock_doc_snapshot.id = MOCK_CLUB_ID
+    mock_doc_snapshot.reference = mock_doc_ref
+    
+    # Configure mock chain: db.collection().where().stream()
+    mock_query = MagicMock()
+    mock_collection.where.return_value = mock_query
+    mock_query.where.return_value = mock_query  # Chained wheres
+    mock_query.limit.return_value = mock_query  # Chained limit
+    mock_query.stream.return_value = [mock_doc_snapshot]
+    mock_query.get.return_value = [mock_doc_snapshot]
+    
+    # Patch db in all service modules where it's imported and used
+    with patch("app.services.club_service.db", mock_db), \
+         patch("app.services.user_service.db", mock_db), \
+         patch("app.routers.events.db", mock_db):
         yield mock_db
 
 # ============================================================================
@@ -131,9 +140,8 @@ def test_join_club(mock_auth, mock_firestore):
 def test_create_event_success(mock_auth, mock_firestore):
     """Test creating an event as an executive (mocked)"""
     
-    # Mock permission check to return True AND patch api.db
-    with patch("models.can_create_events", return_value=True), \
-         patch("api.db", mock_firestore):
+    # Mock permission check to return True - patch where it's imported/used
+    with patch("app.routers.events.can_create_events", return_value=True):
         params = {
             "club_id": MOCK_CLUB_ID,
             "name": "New Event",
@@ -151,8 +159,8 @@ def test_create_event_success(mock_auth, mock_firestore):
 def test_create_event_forbidden(mock_auth, mock_firestore):
     """Test creating an event without permission"""
     
-    # Mock permission check to return False
-    with patch("models.can_create_events", return_value=False):
+    # Mock permission check to return False - patch where it's imported/used
+    with patch("app.routers.events.can_create_events", return_value=False):
         params = {
             "club_id": MOCK_CLUB_ID,
             "name": "New Event",

@@ -1,95 +1,15 @@
 """
-Business logic layer for StudentSpace.
-Handles Firestore interactions and permission checks.
+Club service: handles club-related Firestore operations.
 """
 
-import firebase_admin
-from firebase_admin import credentials, firestore
-from models import (
-    User, Club, ClubMembership, 
-    ClubRole, ClubStatus, 
-    is_executive_anywhere, can_manage_club, can_create_events
-)
 from datetime import datetime
 from typing import List, Optional
-import os
 
-import json
-
-# Initialize Firebase Admin
-# Supports: 
-# 1. FIREBASE_SERVICE_ACCOUNT_JSON env var containing the JSON string
-# 2. GOOGLE_APPLICATION_CREDENTIALS env var pointing to a file
-# 3. serviceAccountKey.json file in root directory
-try:
-    if not firebase_admin._apps:
-        service_account_json = os.getenv('FIREBASE_SERVICE_ACCOUNT_JSON')
-        cred_path = os.getenv('GOOGLE_APPLICATION_CREDENTIALS', 'serviceAccountKey.json')
-        storage_bucket = os.getenv('FIREBASE_STORAGE_BUCKET')
-        
-        if service_account_json:
-            # Parse JSON string from environment variable
-            cred_dict = json.loads(service_account_json)
-            cred = credentials.Certificate(cred_dict)
-            # Initialize with storage bucket if provided
-            if storage_bucket:
-                firebase_admin.initialize_app(cred, {
-                    'storageBucket': storage_bucket
-                })
-            else:
-                firebase_admin.initialize_app(cred)
-            print("Firebase initialized from FIREBASE_SERVICE_ACCOUNT_JSON env var")
-        elif os.path.exists(cred_path):
-            cred = credentials.Certificate(cred_path)
-            # Initialize with storage bucket if provided
-            if storage_bucket:
-                firebase_admin.initialize_app(cred, {
-                    'storageBucket': storage_bucket
-                })
-            else:
-                firebase_admin.initialize_app(cred)
-            print(f"Firebase initialized from {cred_path}")
-        else:
-            print(f"Warning: No Firebase credentials found. Firestore features will fail.")
-            
-    db = firestore.client()
-except Exception as e:
-    print(f"Error initializing Firebase: {e}")
-    db = None
-
-
-class UserService:
-    @staticmethod
-    def create_or_update_user(user: User) -> User:
-        if not db: raise Exception("Database not connected")
-        
-        user.updated_at = datetime.now()
-        if not user.created_at:
-            user.created_at = datetime.now()
-            
-        # Convert to dict and remove None values to avoid overwriting with nulls if partial
-        data = user.dict(exclude_none=True)
-        db.collection('users').document(user.uid).set(data, merge=True)
-        return user
-
-    @staticmethod
-    def get_user(uid: str) -> Optional[User]:
-        if not db: raise Exception("Database not connected")
-        
-        doc = db.collection('users').document(uid).get()
-        if doc.exists:
-            return User(**doc.to_dict())
-        return None
-
-    @staticmethod
-    def get_user_by_email(email: str) -> Optional[User]:
-        if not db: raise Exception("Database not connected")
-        
-        # Query users by email
-        docs = db.collection('users').where('email', '==', email).limit(1).stream()
-        for doc in docs:
-            return User(**doc.to_dict())
-        return None
+from app.models.schemas import (
+    User, Club, ClubMembership,
+    ClubRole, ClubStatus
+)
+from app.services import db
 
 
 class ClubService:
@@ -305,9 +225,3 @@ class ClubService:
         events = db.collection('events').where('club_id', '==', club_id).stream()
         for e in events:
             e.reference.delete()
-
-
-
-
-
-

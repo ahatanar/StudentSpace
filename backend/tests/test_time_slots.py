@@ -1,7 +1,7 @@
 """Test script to verify time slot processing and API response."""
 
 import json
-from heatmap_builder import build_simple_heatmap
+from app.services.heatmap.builder import build_simple_heatmap
 
 def test_api_response():
     """Test the heatmap API response structure."""
