@@ -9,6 +9,7 @@ firebase-admin>=6.2.0
 # Environment and utilities
 python-dotenv>=1.0.0
 pydantic[email]>=2.0.0
+python-multipart>=0.0.5  # Required for file uploads (UploadFile)
 
 # Google Calendar integration
 google-auth>=2.23.0
