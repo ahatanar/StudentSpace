@@ -14,6 +14,10 @@ The application is deployed on Render:
 
 - **Frontend**: https://studentspace-frontend.onrender.com
 
+## Project Presentation
+
+- **Google Drive**: [Project Presentation Video](https://drive.google.com/drive/folders/1803Eg60dUfO645-l9k2gVa1-5j1vXfkX?usp=sharing)
+
 ## Features
 
 ### User Management
@@ -84,6 +88,11 @@ StudentSpace follows a **layered monolithic architecture** with clear separation
 |  +------------------------+    +-----------------------------+   |
 +------------------------------------------------------------------+
 ```
+---
+
+### UML Use Case Diagram
+
+![StudentSpace Use Case Diagram](uml/UML%20diagram.png)
 
 ---
 
@@ -189,7 +198,7 @@ cp .env.example .env
 # Save as backend/serviceAccountKey.json
 
 # Run development server
-uvicorn api:app --reload --port 8000
+uvicorn app.main:app --reload --port 8000
 ```
 
 #### 3. Frontend Setup
@@ -210,6 +219,16 @@ npm run dev
 #### 4. Access the Application
 - **Frontend**: http://localhost:3000
 - **Backend API**: http://localhost:8000
+
+### CI/CD Pipeline
+
+GitHub Actions workflow (`.github/workflows/ci.yml`) runs on push/PR to main:
+
+| Job | Description |
+|-----|-------------|
+| **Backend Tests** | Python 3.11, runs pytest on all test files |
+| **Frontend Build** | Node.js 20, ESLint + production build |
+| **Docker Build** | Builds backend and frontend Docker images |
 
 ### Docker Deployment
 
@@ -239,6 +258,25 @@ pip install selenium pytest
 ### Run Tests
 ```bash
 pytest selenium_tests/test_suite.py -v
+```
+
+---
+
+## Backend Tests
+
+Unit and integration tests for the FastAPI backend.
+
+### Setup
+```bash
+cd backend
+pip install pytest
+```
+
+### Run Tests
+```bash
+# Run all tests
+pytest tests/ -v
+
 ```
 
 ---

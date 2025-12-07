@@ -1,6 +1,6 @@
 import unittest
 from datetime import time
-from time_slot_processor import parse_meeting_time, get_time_slots_for_meeting, build_heatmap_grid
+from app.services.heatmap.time_slots import parse_meeting_time, get_time_slots_for_meeting, build_heatmap_grid
 
 class TestTimeSlotProcessor(unittest.TestCase):
 

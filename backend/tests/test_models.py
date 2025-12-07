@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import MagicMock
 from datetime import datetime
-from models import (
+from app.models.schemas import (
     User, Club, ClubMembership, 
     ClubRole, ClubStatus,
     is_executive_anywhere, can_manage_club, 

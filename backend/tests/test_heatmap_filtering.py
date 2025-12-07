@@ -1,10 +1,10 @@
 import unittest
 from unittest.mock import patch, MagicMock
-from heatmap_builder import build_simple_heatmap
+from app.services.heatmap.builder import build_simple_heatmap
 
 class TestHeatmapBuilder(unittest.TestCase):
 
-    @patch('heatmap_builder.load_sections')
+    @patch('app.services.heatmap.builder.load_sections')
     def test_filtering_logic(self, mock_load_sections):
         """Test that sections are filtered correctly."""
         

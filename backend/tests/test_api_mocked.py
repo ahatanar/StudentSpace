@@ -9,8 +9,9 @@ from unittest.mock import MagicMock, patch
 from datetime import datetime
 
 # Import app and models
-from api import app, get_current_user
-from models import User, Club, Event, ClubRole, ClubStatus
+from app.main import app
+from app.dependencies import get_current_user
+from app.models.schemas import User, Club, Event, ClubRole, ClubStatus
 
 # Create TestClient
 client = TestClient(app)
@@ -53,7 +54,7 @@ def mock_auth():
 @pytest.fixture
 def mock_firestore():
     """Mock the Firestore client in services.py"""
-    with patch("services.db") as mock_db:
+    with patch("app.services.db") as mock_db:
         # Setup mock collections
         mock_collection = MagicMock()
         mock_doc_ref = MagicMock()

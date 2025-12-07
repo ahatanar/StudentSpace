@@ -1,8 +1,8 @@
 import json
 import os
 
-# Get the directory where this script is located
-DATA_DIR = os.path.dirname(os.path.abspath(__file__))
+# Get the directory where data files are located (backend/data/)
+DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))), "data")
 
 def load_sections(term: str = "202601"):
     """
@@ -94,7 +94,7 @@ def build_simple_heatmap(interval_minutes: int = 30, term: str = "202601", inclu
             filtered_sections.append(section)
 
     # Import and use time slot processor with specified interval
-    from time_slot_processor import build_heatmap_grid, generate_time_slots
+    from app.services.heatmap.time_slots import build_heatmap_grid, generate_time_slots
     
     heatmap_data = build_heatmap_grid(filtered_sections, interval_minutes)
     time_slots = generate_time_slots(interval_minutes=interval_minutes)
