@@ -6,6 +6,7 @@ FastAPI application entry point.
 import os
 from dotenv import load_dotenv
 load_dotenv()
+from fastapi.responses import JSONResponse
 
 # Now import everything else
 from fastapi import FastAPI
@@ -40,3 +41,11 @@ from typing import List
 def get_club_types():
     """Return list of available club types (legacy endpoint)"""
     return [t.value for t in ClubType]
+
+@app.get("/health")
+async def health_get():
+    return {"status": "ok"}
+
+@app.head("/health")
+async def health_head():
+    return JSONResponse(status_code=200, content=None)

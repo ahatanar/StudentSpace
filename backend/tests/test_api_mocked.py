@@ -7,7 +7,6 @@ import pytest
 from fastapi.testclient import TestClient
 from unittest.mock import MagicMock, patch
 from datetime import datetime
-from fastapi.responses import JSONResponse
 
 # Import app and models
 from app.main import app
@@ -93,10 +92,6 @@ def mock_firestore():
 # ============================================================================
 # TESTS
 # ============================================================================
-@app.head("/health")
-async def health_head():
-    # HEAD responses must NOT include a body.
-    return JSONResponse(content=None, status_code=200)
 
 def test_health_check():
     response = client.get("/health")
